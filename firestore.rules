@@ -32,14 +32,6 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Pagelle: ognuno scrive solo il proprio documento di voti.
-    // L'app mostra a tutti soltanto le medie, salvate dall'admin nello storico.
-    match /grades/{id} {
-      allow read: if signed();
-      allow create, update: if signed() && (request.auth.uid == id || isAdmin());
-      allow delete: if isAdmin();
-    }
-
     // Partita corrente e storico: solo l'admin scrive.
     match /matches/{id} {
       allow read: if signed();
