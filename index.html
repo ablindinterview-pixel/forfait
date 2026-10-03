@@ -5,7 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b0f1a">
 <link rel="icon" href="icona.png">
-<link rel="apple-touch-icon" href="icona.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Forfait">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <title>Forfait</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap">
 <style>
@@ -253,6 +258,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
     appId:"1:66069554737:web:880ca9df914338db531710"
   };
   var ready=null;
+  if('serviceWorker' in navigator)window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});
   function boot(){
     if(ready)return ready;
     ready=new Promise(function(resolve){
@@ -260,7 +266,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
       var auth=firebase.auth(),db=firebase.firestore();
       auth.onAuthStateChanged(function(u){
         var box=document.getElementById('login');
-        if(u){if(box)box.remove();window.__uid=u.uid;resolve({auth:auth,db:db,user:u})}
+        if(u){if(box)box.remove();window.__uid=u.uid;resolve({auth:auth,db:db,user:u});setTimeout(function(){if(window.showIntro)window.showIntro(false)},400)}
         else showLogin(auth);
       });
     });
@@ -314,6 +320,74 @@ button:disabled{opacity:.45;cursor:not-allowed}
     });
     return Promise.resolve(null);
   }};
+})();
+
+/* Forfait · introduzione al primo ingresso */
+(function(){
+  var KEY='forfait_intro_v1';
+  function seen(){try{return localStorage.getItem(KEY)==='1'}catch(e){return false}}
+  function mark(){try{localStorage.setItem(KEY,'1')}catch(e){}}
+  function standalone(){return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true}
+  function install(){
+    if(standalone())return '';
+    var ua=navigator.userAgent||'',ios=/iPad|iPhone|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1);
+    return '<div class="itip"><b>Tienila sul telefono</b><span>'+(ios?'Tocca il tasto Condividi di Safari e scegli «Aggiungi alla schermata Home».':'Dal menu del browser scegli «Installa app» o «Aggiungi a schermata Home».')+'</span></div>';
+  }
+  function slides(){return [
+    {i:'👋',t:'Benvenuto in Forfait',p:'L’app del calcetto del martedì: risposte, formazione, squadre e statistiche del gruppo, tutto in un posto.'},
+    {i:'✅',t:'Rispondi alla partita',p:'Ogni settimana tocca «Ci sono», «Forse» o «Non ci sono» entro il termine indicato. Se i posti sono finiti vai in coda e entri se qualcuno si ritira.',x:'<div class="ichips"><span style="background:var(--green)">Ci sono</span><span style="background:var(--yellow)">Forse</span><span style="background:var(--pink)">Non ci sono</span></div>'},
+    {i:'📋',t:'Formazione e forfait',p:'Quando l’admin rende ufficiale la formazione, chi si ritira dopo conta come forfait. Fino ad allora puoi cambiare idea senza conseguenze.'},
+    {i:'⚖️',t:'Squadre equilibrate',p:'Le squadre si sorteggiano in base ai livelli e ai ruoli, così sono pari. Dalla scheda Partita puoi indicare il livello dei compagni da 1 a 5.'},
+    {i:'🏆',t:'Risultato, MVP e Pagella',p:'Dopo la partita l’admin inserisce punteggio, gol e assist, e tutti votano l’MVP. In Pagella trovi classifiche, premi, record e trofei a livelli.'},
+    {i:'🧑',t:'Il tuo profilo',p:'Tocca il tuo avatar in alto a destra per scegliere nome, soprannome, ruoli, colore e forma. Con il tasto Condividi mandi il riepilogo al gruppo.',x:install()}
+  ]}
+  function css(){
+    if(document.getElementById('introcss'))return;
+    var s=document.createElement('style');s.id='introcss';
+    s.textContent='#intro{position:fixed;inset:0;z-index:98;background:var(--bg,#0b0f1a);color:var(--ink,#fff);display:flex;flex-direction:column;padding:max(14px,env(safe-area-inset-top)) 20px max(18px,env(safe-area-inset-bottom))}'+
+    '#intro .itop{display:flex;justify-content:flex-end;min-height:40px}'+
+    '#intro .iskip{background:none;border:0;color:var(--muted,#8d9ac0);font:700 14px var(--body,sans-serif);padding:10px 4px;cursor:pointer}'+
+    '#intro .ibody{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;max-width:420px;margin:0 auto;width:100%}'+
+    '#intro .iico{width:112px;height:112px;border-radius:50%;border:3px solid var(--bc,#2f3d66);background:var(--surface,#141b2d);display:grid;place-items:center;font-size:54px;line-height:1;margin-bottom:26px;box-shadow:0 0 28px rgba(61,139,255,.25);font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}'+
+    '#intro h2{margin:0 0 12px;font:700 30px/1.1 var(--display,sans-serif);text-transform:uppercase}'+
+    '#intro p{margin:0;font-size:17px;line-height:1.45;color:var(--ink,#fff)}'+
+    '#intro .ichips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:20px}'+
+    '#intro .ichips span{padding:8px 14px;border-radius:99px;border:3px solid var(--bc,#2f3d66);color:#07101f;font-weight:800;font-size:14px}'+
+    '#intro .itip{margin-top:22px;padding:12px 14px;border:2px dashed var(--bc,#2f3d66);border-radius:14px;text-align:left;font-size:14px;line-height:1.4}'+
+    '#intro .itip b{display:block;margin-bottom:2px}'+
+    '#intro .idots{display:flex;justify-content:center;gap:8px;margin:14px 0 16px}'+
+    '#intro .idots i{width:9px;height:9px;border-radius:50%;background:var(--soft,#222c4a)}'+
+    '#intro .idots i.on{background:var(--green,#39ff88);width:26px;border-radius:5px}'+
+    '#intro .inav{display:flex;gap:10px;max-width:420px;width:100%;margin:0 auto}'+
+    '#intro .inav button{flex:1}';
+    document.head.appendChild(s);
+  }
+  window.showIntro=function(force){
+    if(!force&&seen())return;
+    if(document.getElementById('intro'))return;
+    css();
+    var S=slides(),n=0,box=document.createElement('div');
+    box.id='intro';box.setAttribute('role','dialog');box.setAttribute('aria-label','Introduzione a Forfait');
+    document.body.appendChild(box);
+    function done(){mark();box.remove()}
+    function draw(dir){
+      var s=S[n],last=n===S.length-1;
+      box.innerHTML='<div class="itop"><button class="iskip" data-i="skip">'+(last?'':'Salta')+'</button></div>'+
+        '<div class="ibody" id="ibody"><div class="iico">'+s.i+'</div><h2>'+s.t+'</h2><p>'+s.p+'</p>'+(s.x||'')+'</div>'+
+        '<div class="idots">'+S.map(function(_,k){return '<i'+(k===n?' class="on"':'')+'></i>'}).join('')+'</div>'+
+        '<div class="inav">'+(n>0?'<button class="ghost" data-i="prev">Indietro</button>':'')+'<button class="primary" data-i="next">'+(last?'Inizia':'Avanti')+'</button></div>';
+      var b=document.getElementById('ibody');
+      if(dir&&b&&b.animate)b.animate([{opacity:0,transform:'translateX('+(dir*36)+'px)'},{opacity:1,transform:'none'}],{duration:260,easing:'ease-out'});
+    }
+    box.addEventListener('click',function(e){
+      var t=e.target.closest&&e.target.closest('[data-i]');if(!t)return;
+      var a=t.getAttribute('data-i');
+      if(a==='skip')done();
+      else if(a==='prev'&&n>0){n--;draw(-1)}
+      else if(a==='next'){if(n<S.length-1){n++;draw(1)}else done()}
+    });
+    draw(0);
+  };
 })();
 </script>
 <script>
@@ -1032,6 +1106,7 @@ function vProfilo(onb){
   h+='<div class="grp"><span class="label">Aspetto dell\'app · solo su questo dispositivo</span><div class="chips">'+[['dark','Scuro'],['light','Chiaro']].map(function(o){var lt=document.documentElement.getAttribute('data-mode')==='light';return '<button class="chip '+((o[0]==='light')===lt?'on':'')+'" data-a="mode" data-v="'+o[0]+'">'+o[1]+'</button>'}).join('')+'</div></div>';
   h+=onb?'<button class="primary" data-a="join">Entra nel gruppo</button>':'<button class="primary" data-a="tab" data-v="partita">Torna alla partita</button>';
   if(!onb&&!ADMIN)h+='<p class="note" style="word-break:break-all;margin-top:14px">ID account: '+esc(UID)+'</p>';
+  if(!onb)h+='<button class="ghost" data-a="intro" style="margin-top:10px">Rivedi l\'introduzione</button>';
   h+=helpBlock();
   return h;
 }
@@ -1209,6 +1284,7 @@ document.addEventListener('click',function(e){
   else if(a==='help'){S.help=!S.help;if(S.help)fxOn({run:function(){reveal($1('.help'));cascade(qa('.help .note'),60,8)}})}
   else if(a==='why'){S.why=!S.why;if(S.why)fxOn({run:function(){reveal($1('.why'));cascade(qa('.why li'),55,8)}})}
   else if(a==='copy'){copyRem();return}
+  else if(a==='intro'){if(window.showIntro)window.showIntro(true);return}
   else if(a==='share'){shareNow();var sb=$1('[data-a="share"]');if(sb)pop(sb,1.25);return}
   else if(a==='hist'){S.openH=S.openH===id?null:id;if(S.openH===id)fxOn({run:function(){reveal($1('.hdet'))}})}
   else if(a==='img'){mkImg(id);return}
