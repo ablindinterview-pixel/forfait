@@ -94,6 +94,9 @@ button:focus-visible{outline:3px dashed var(--ink);outline-offset:3px}
 #trosheet .tsh button{width:auto;flex:none;padding:6px 16px}
 .trobtn .trosum small{font-size:12px;font-weight:600;color:var(--muted)}
 #trosheet .tsc{overflow:auto;-webkit-overflow-scrolling:touch}
+.cd{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:12px 0 4px;padding:8px 12px;border:var(--bw) dashed var(--bc);border-radius:12px;background:var(--soft)}
+.cd .label{margin:0}.cd b{font:700 17px var(--body);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cd.soon b{color:var(--pink)}.cd.over{opacity:.75}.cd.over .label{visibility:hidden}
 .tlist{display:grid;gap:8px;margin-top:10px}
 .tro{display:flex;align-items:center;gap:10px;border:var(--bw) solid var(--bc);border-radius:12px;padding:10px;opacity:.55;filter:grayscale(1);min-width:0}
 .tro.on{opacity:1;filter:none;border-color:var(--tc);background:rgba(255,255,255,.03)}
@@ -462,6 +465,10 @@ function np(n,x,y){return n+' '+(n===1?x:y)}
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
 function dLabel(iso){return iso?cap(new Date(iso+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})):'Data da definire'}
 function dShort(iso){return iso?new Date(iso+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'}):''}
+function dlTs(iso){if(!iso)return 0;var d=new Date(iso+'T20:00:00');d.setDate(d.getDate()-1);return d.getTime()}
+function cdText(ts){var ms=ts-Date.now();if(ms<=0)return null;var t=Math.floor(ms/1000),dd=Math.floor(t/86400),hh=Math.floor(t%86400/3600),mm=Math.floor(t%3600/60),ss=t%60;function z(n){return n<10?'0'+n:''+n}return (dd?dd+(dd===1?' giorno ':' giorni ')+z(hh)+'h '+z(mm)+'m':z(hh)+':'+z(mm)+':'+z(ss))}
+function cdTick(){var e=document.getElementById('cd');if(!e)return;var ts=+e.dataset.ts,t=cdText(ts);e.classList.toggle('over',!t);e.classList.toggle('soon',!!t&&ts-Date.now()<3600000*3);e.querySelector('b').textContent=t||'Iscrizioni chiuse'}
+setInterval(cdTick,1000);
 function deadline(iso){if(!iso)return 'il giorno prima';var d=new Date(iso+'T12:00:00');d.setDate(d.getDate()-1);return d.toLocaleDateString('it-IT',{weekday:'long'})+' alle 20:00'}
 function isoOf(d){var m=d.getMonth()+1,x=d.getDate();return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(x<10?'0':'')+x}
 function nextTuesday(){var d=new Date();d.setDate(d.getDate()+1);while(d.getDay()!==2)d.setDate(d.getDate()+1);return isoOf(d)}
@@ -811,6 +818,7 @@ function vPartita(){
   var shown=L.length,miss=need()-shown;
   h+='<h2>Prossima partita</h2><p class="sub">Rispondi entro '+esc(deadline(c.date))+'. '+(off?'La formazione è ufficiale: chi si ritira ora conta come forfait.':'Finché la formazione non è ufficiale puoi cambiare idea senza conseguenze.')+'</p>';
   h+='<div class="panel"><div class="ticket"><div><div class="label">'+fmtName(c)+' · '+per()+' contro '+per()+'</div><div class="when">'+esc(dLabel(c.date))+'</div><div class="where">'+esc(c.time||'Orario da definire')+' · '+esc(c.field||'Campo da definire')+'</div></div><div class="count">'+shown+'<span>/'+need()+'</span></div></div>';
+  if(!off&&c.date)h+='<div class="cd" id="cd" data-ts="'+dlTs(c.date)+'"><span class="label">Iscrizioni aperte ancora</span><b>'+(cdText(dlTs(c.date))||'Iscrizioni chiuse')+'</b></div>';
   h+='<div class="bar"><i style="width:'+Math.min(100,shown/need()*100)+'%"></i></div>';
   h+='<div class="meta"><span>'+(miss>0?'Mancano '+miss+' per il '+per()+' contro '+per():miss===0?'Numero completo: si gioca '+per()+' contro '+per()+(Q.length?' · '+Q.length+' in coda':''):(shown-need())+' in più: si gira a rotazione')+'</span><span>'+m.length+' forse · '+n.length+' no</span></div>';
   if(ADMIN&&!off)h+='<div class="seg" style="grid-template-columns:1fr 1fr;margin:12px 0 0">'+[['calcetto','Calcetto 5 contro 5'],['calciotto','Calciotto 7 contro 7']].map(function(o){return '<button class="btn '+((c.format==='calciotto')===(o[0]==='calciotto')?'on-yes':'')+'" data-a="fmt" data-v="'+o[0]+'">'+o[1]+'</button>'}).join('')+'</div>';
