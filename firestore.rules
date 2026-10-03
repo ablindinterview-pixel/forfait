@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signed() { return request.auth != null; }
+    function isAdmin() {
+      return signed() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Elenco degli admin: ognuno può leggere solo il proprio documento.
+    // Si modifica solo dalla console Firebase.
+    match /admins/{uid} {
+      allow read: if signed() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // Profili, risposte e voti MVP: ognuno scrive i propri, l'admin tutti.
+    match /players/{id} {
+      allow read: if signed();
+      allow create, update: if signed() && (request.auth.uid == id || isAdmin());
+      allow delete: if isAdmin();
+    }
+    match /rsvps/{id} {
+      allow read: if signed();
+      allow create, update: if signed() && (request.auth.uid == id || isAdmin());
+      allow delete: if isAdmin();
+    }
+    match /mvpvotes/{id} {
+      allow read: if signed();
+      allow create, update: if signed() && (request.auth.uid == id || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // Partita corrente e storico: solo l'admin scrive.
+    match /matches/{id} {
+      allow read: if signed();
+      allow write: if isAdmin();
+    }
+    match /history/{id} {
+      allow read: if signed();
+      allow write: if isAdmin();
+    }
+    // Livelli: ognuno può scrivere solo il proprio voto (campo r_<suo id>).
+    match /levels/{id} {
+      allow read: if signed();
+      allow create: if signed() &&
+        request.resource.data.keys().hasOnly(['r_' + request.auth.uid]);
+      allow update: if signed() && (isAdmin() ||
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['r_' + request.auth.uid]));
+      allow delete: if isAdmin();
+    }
+  }
+}
