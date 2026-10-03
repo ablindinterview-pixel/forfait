@@ -400,7 +400,7 @@ function need(){return D.cur&&D.cur.format==='calciotto'?14:10}
 function per(){return need()/2}
 function fmtName(o){return o&&o.format==='calciotto'?'Calciotto':'Calcetto'}
 var DB=null,UID=null,MYNAME='',CANWRITE=true,ADMIN=false;
-var D={players:{},rsvps:{},levels:{},mvpv:{},history:[],cur:null};
+var D={players:{},rsvps:{},levels:{},mvpv:{},grades:{},history:[],cur:null};
 var S={gl:3,gr:'Laterale',gname:'',corr:null,tab:'partita',sub:'marcatori',rating:false,editM:false,ready:false,err:'',dirty:false,
   res:{sa:0,sb:0,goals:{},assists:{},mvp:null,forMatch:null},
   draft:{nick:'',num:10,roles:['Attacco'],foot:'Destro',color:COLORS[0]}};
@@ -669,6 +669,7 @@ function shareText(){
     L.push('📊 Pagella · '+np(D.history.length,'partita giocata','partite giocate'));
     if(map[sub]){L.push(({marcatori:'Marcatori',assist:'Assist',mvp:'MVP',presenze:'Presenze',forfait:'Forfait'})[sub]+':');topList(map[sub][0],map[sub][1]).forEach(function(x){L.push(x)})}
     else if(sub==='media'){L.push('Media gol a partita:');ids.filter(function(id){return st[id].pl>0}).map(function(id){return [id,st[id].g/st[id].pl]}).sort(function(x,y){return y[1]-x[1]}).slice(0,5).forEach(function(x,i){L.push((i+1)+'. '+pname(x[0])+' '+x[1].toFixed(1))})}
+    else if(sub==='voti'){L.push('Voti medi:');gradeAvgs().slice(0,5).forEach(function(x,i){L.push((i+1)+'. '+pname(x.id)+' '+fmtG(x.avg))})}
     else if(sub==='premi'){awardsList().forEach(function(x){L.push(x.l+': '+x.n+' ('+x.d+')')})}
     else if(sub==='albo'){D.history.slice(0,5).forEach(function(m){L.push(dShort(m.date)+' · '+tn(m,'A')+' '+(m.sa||0)+'–'+(m.sb||0)+' '+tn(m,'B'))})}
     else{[['Capocannoniere','g','gol'],['MVP','mvp','premi'],['Più presente','pl','partite']].forEach(function(r){var b=topList(r[1],r[2])[0];if(b)L.push(r[0]+': '+b.replace(/^1\. /,''))})}
@@ -712,6 +713,24 @@ function mvpVoteHtml(c,all){
   return h+'<p class="note">Hanno votato '+V.n+' su '+all.length+'.</p></div>';
 }
 
+
+
+/* pagelle: voti da 0 a 10, anonimi (si vede solo la media a partita salvata) */
+function fmtG(v){return (Math.round(v*10)/10).toFixed(Math.round(v*10)%10===0?0:1).replace('.',',')}
+function myGrades(){var g=D.grades[UID];return g&&D.cur&&g.matchId===D.cur.id&&g.g?g.g:{}}
+function gradeAvgs(){var s={},n={};D.history.forEach(function(m){Object.keys(m.gr||{}).forEach(function(id){if(!D.players[id])return;s[id]=(s[id]||0)+m.gr[id];n[id]=(n[id]||0)+1})});return Object.keys(s).map(function(id){return {id:id,avg:s[id]/n[id],n:n[id]}}).sort(function(x,y){return y.avg-x.avg})}
+function gradeVoteHtml(c,all){
+  var played=all.indexOf(UID)>=0,mine=myGrades(),n=0;
+  Object.keys(D.grades).forEach(function(u){var v=D.grades[u];if(v&&v.matchId===c.id&&v.g&&Object.keys(v.g).length)n++});
+  var h='<div class="panel"><div class="label">Pagelle · voti da 0 a 10</div>';
+  if(!played)return h+'<p class="note">Votano i giocatori che hanno giocato.</p></div>';
+  h+='<p class="note" style="margin:4px 0 8px">Dai un voto a compagni e avversari, a mezzi punti. Nessuno vede chi ha dato quale voto: compare solo la media, dopo che l\'admin ha salvato il risultato. Puoi saltare chi non vuoi giudicare.</p>';
+  all.filter(function(id){return id!==UID}).forEach(function(id){
+    var g=mine[id],has=typeof g==='number';
+    h+='<div class="row"><div class="name">'+esc(pname(id))+'</div><div class="stepper"><button data-a="gr" data-id="'+esc(id)+'" data-d="-1" aria-label="Abbassa il voto di '+esc(pname(id))+'">−</button><output data-gout="g_'+esc(id)+'" style="min-width:44px'+(has?'':';color:var(--muted)')+'">'+(has?fmtG(g):'–')+'</output><button data-a="gr" data-id="'+esc(id)+'" data-d="1" aria-label="Alza il voto di '+esc(pname(id))+'">+</button></div></div>';
+  });
+  return h+'<p class="note">Hanno votato '+n+' su '+all.length+'.</p></div>';
+}
 
 function guestHtml(off){
   var h='<div class="panel"><div class="label">Ospiti di questa sera</div><p class="note" style="margin:4px 0 8px">Giocano solo questa partita: entrano in formazione e nel sorteggio, ma non nelle statistiche.</p>';
@@ -895,7 +914,7 @@ function vRisultato(){
   if(c.status==='closed')return h+'<div class="panel empty">Risultato già salvato: '+esc(tn(c,'A'))+' '+(c.sa||0)+' – '+(c.sb||0)+' '+esc(tn(c,'B'))+'. Convoca la prossima dalla scheda Partita.</div>'+(ADMIN?'<button class="ghost" data-a="editres" data-id="'+esc(c.id)+'">Correggi il risultato</button>':'');
   if(!corr&&!teamsReady())return h+'<div class="panel empty">Servono prima le squadre.'+(ADMIN?' Creale dalla scheda Squadre.':'')+'</div>';
   var all0=c.teamA.concat(c.teamB||[]).filter(function(id){return P(id)});
-  if(!ADMIN)return h+mvpVoteHtml(c,all0)+'<div class="panel empty">Il risultato lo inserisce l\'admin dopo la partita.</div>';
+  if(!ADMIN)return h+mvpVoteHtml(c,all0)+gradeVoteHtml(c,all0)+'<div class="panel empty">Il risultato lo inserisce l\'admin dopo la partita.</div>';
   if(S.res.forMatch!==c.id)S.res={sa:0,sb:0,goals:{},assists:{},mvp:null,forMatch:c.id};
   var MV=corr?{t:{},n:0}:mvpVotes(),LD=corr?null:mvpLeader(MV.t);
   if(!S.res.mvp&&LD)S.res.mvp=LD;
@@ -918,7 +937,7 @@ function vRisultato(){
     h+='<div class="row"><span style="width:14px;height:14px;border-radius:50%;border:var(--bw) solid var(--bc);flex:none;background:var('+(inA?'--blue':'--pink')+')"></span><div class="name">'+esc(pname(id))+'</div><div class="stepper"><button data-a="ast" data-id="'+esc(id)+'" data-d="-1" aria-label="Meno assist '+esc(pname(id))+'">−</button><output data-aout="'+esc(id)+'">'+g+'</output><button data-a="ast" data-id="'+esc(id)+'" data-d="1" aria-label="Più assist '+esc(pname(id))+'">+</button></div></div>';
   });
   h+='</div>';}
-  h+=(corr?'':mvpVoteHtml(c,A.concat(B)));
+  h+=(corr?'':mvpVoteHtml(c,A.concat(B))+gradeVoteHtml(c,A.concat(B)));
   h+='<div class="panel"><div class="label" style="margin-bottom:8px">MVP della partita</div><div class="chips">';
   A.concat(B).forEach(function(id){h+='<button class="chip '+(r.mvp===id?'on':'')+'" data-a="mvp" data-id="'+esc(id)+'">'+esc(pname(id))+(MV.t[id]?' · '+MV.t[id]:'')+'</button>'});
   h+='</div><p class="note">'+(corr?'Scegli l\'MVP corretto.':MV.n?(LD?'Il gruppo ha scelto '+esc(pname(LD))+': è già selezionato, puoi cambiarlo.':'Parità nei voti del gruppo: scegli tu. Accanto ai nomi vedi i voti ricevuti.'):'Nessun voto dal gruppo: scegli tu.')+'</p></div><button class="primary" data-a="save">Salva il risultato</button>';
@@ -993,6 +1012,8 @@ function recordsHtml(){
   r=holders(ma);card('Più assist in una partita',r?r.v+(r.v===1?' assist':' assist'):'—',r?names(r.h):'nessun dato');
   r=holders(bs,2);card('Più presenze di fila',r?r.v:'—',r?names(r.h):'servono almeno 2 partite');
   r=holders(bw,2);card('Più vittorie di fila',r?r.v:'—',r?names(r.h):'servono almeno 2 vittorie');
+  var bg=null;H.forEach(function(m){Object.keys(m.gr||{}).forEach(function(id){if(D.players[id]&&(!bg||m.gr[id]>bg.v))bg={v:m.gr[id],id:id,m:m}})});
+  card('Voto più alto',bg?fmtG(bg.v):'—',bg?esc(pname(bg.id))+' · '+esc(dShort(bg.m.date)):'nessuna pagella');
   var totG=0;H.forEach(function(m){totG+=(m.sa||0)+(m.sb||0)});
   card('Gol totali in stagione',String(totG),np(H.length,'partita','partite')+' · '+(totG/H.length).toFixed(1)+' a partita');
   return '<div class="awards">'+cards.join('')+'</div>';
@@ -1002,7 +1023,7 @@ function vPagella(){
   function top(key){var b=null;ids.forEach(function(id){if(st[id][key]>0&&(!b||st[id][key]>st[b][key]))b=id});return b}
   function aw(label,key,u1,u2){var b=top(key);return '<div class="award"><div class="label">'+label+'</div><div class="v">'+(b?esc(pname(b)):'—')+'</div><div class="d">'+(b?st[b][key]+' '+(st[b][key]===1?u1:u2):'nessun dato')+'</div></div>'}
   h+='<div class="awards">'+aw('Capocannoniere','g','gol','gol')+aw('MVP','mvp','premio','premi')+aw('Più presente','pl','partita','partite')+aw('Più forfait','fg','forfait','forfait')+'</div>';
-  h+='<div class="tabs2">'+[['premi','Premi'],['xi','Formazione tipo'],['record','Record'],['marcatori','Marcatori'],['assist','Assist'],['media','Media gol'],['mvp','MVP'],['presenze','Presenze'],['serie','Serie'],['coppie','Coppie'],['forfait','Forfait'],['albo','Albo d\'oro']].map(function(x){return '<button class="chip '+(S.sub===x[0]?'on':'')+'" data-a="sub" data-v="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div><div class="panel">';
+  h+='<div class="tabs2">'+[['premi','Premi'],['xi','Formazione tipo'],['record','Record'],['marcatori','Marcatori'],['assist','Assist'],['media','Media gol'],['mvp','MVP'],['voti','Voti'],['presenze','Presenze'],['serie','Serie'],['coppie','Coppie'],['forfait','Forfait'],['albo','Albo d\'oro']].map(function(x){return '<button class="chip '+(S.sub===x[0]?'on':'')+'" data-a="sub" data-v="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div><div class="panel">';
   function list(key){
     var arr=ids.slice().sort(function(a,b){return st[b][key]-st[a][key]}),max=Math.max(1,arr.length?st[arr[0]][key]:1);
     if(!arr.length)return '<div class="empty">Ancora nessun giocatore.</div>';
@@ -1017,6 +1038,7 @@ function vPagella(){
   if(S.sub==='record')h+=recordsHtml();
   if(S.sub==='assist')h+=list('a');
   if(S.sub==='mvp')h+=list('mvp');
+  if(S.sub==='voti')h+=listV(gradeAvgs().map(function(x){return {n:esc(pname(x.id)),v:x.avg,t:fmtG(x.avg)+' · '+x.n}}),function(v){return fmtG(v)},'Ancora nessuna pagella. I voti compaiono dopo la prima partita votata.')+'<p class="note">Media dei voti da 0 a 10 ricevuti dai giocatori, con le partite votate accanto. Si vede solo la media: i singoli voti non sono visibili.</p>';
   if(S.sub==='presenze')h+=list('pl');
   if(S.sub==='forfait')h+=list('fg');
   if(S.sub==='albo'){
@@ -1026,7 +1048,7 @@ function vPagella(){
       h+='<div class="hist"><div data-a="hist" data-id="'+esc(m._id)+'" role="button" tabindex="0" style="cursor:pointer"><div class="label">'+esc(dShort(m.date))+' · '+(m.format==='calciotto'?'calciotto · ':'')+(op?'chiudi':'dettagli')+'</div><div class="res">'+esc(tn(m,'A'))+' '+(m.sa||0)+' – '+(m.sb||0)+' '+esc(tn(m,'B'))+'</div><div style="color:var(--muted)">MVP '+esc(pname(m.mvp))+'</div></div>';
       if(op){
         var gl=Object.keys(m.goals||{}).filter(function(k){return m.goals[k]>0}).sort(function(a,b){return m.goals[b]-m.goals[a]}).map(function(k){return esc(pname(k))+' '+m.goals[k]}).join(', ');
-        h+='<div class="hdet"><p class="note"><b>'+esc(tn(m,'A'))+':</b> '+esc((m.teamA||[]).map(pname).join(', ')||'—')+'</p><p class="note"><b>'+esc(tn(m,'B'))+':</b> '+esc((m.teamB||[]).map(pname).join(', ')||'—')+'</p><p class="note"><b>Marcatori:</b> '+(gl||'—')+'</p><p class="note"><b>Assist:</b> '+(Object.keys(m.assists||{}).filter(function(k){return m.assists[k]>0}).sort(function(a,b){return m.assists[b]-m.assists[a]}).map(function(k){return esc(pname(k))+' '+m.assists[k]}).join(', ')||'—')+'</p><button class="ghost" data-a="img" data-id="'+esc(m._id)+'">Crea il riepilogo da condividere</button>'+(ADMIN?'<button class="ghost" data-a="editres" data-id="'+esc(m._id)+'">Correggi il risultato</button>':'')+'</div>';
+        h+='<div class="hdet"><p class="note"><b>'+esc(tn(m,'A'))+':</b> '+esc((m.teamA||[]).map(pname).join(', ')||'—')+'</p><p class="note"><b>'+esc(tn(m,'B'))+':</b> '+esc((m.teamB||[]).map(pname).join(', ')||'—')+'</p><p class="note"><b>Marcatori:</b> '+(gl||'—')+'</p><p class="note"><b>Assist:</b> '+(Object.keys(m.assists||{}).filter(function(k){return m.assists[k]>0}).sort(function(a,b){return m.assists[b]-m.assists[a]}).map(function(k){return esc(pname(k))+' '+m.assists[k]}).join(', ')||'—')+'</p>'+(m.gr&&Object.keys(m.gr).length?'<p class="note"><b>Voti:</b> '+Object.keys(m.gr).sort(function(x,y){return m.gr[y]-m.gr[x]}).map(function(k){return esc(pname(k))+' '+fmtG(m.gr[k])}).join(', ')+'</p>':'')+'<button class="ghost" data-a="img" data-id="'+esc(m._id)+'">Crea il riepilogo da condividere</button>'+(ADMIN?'<button class="ghost" data-a="editres" data-id="'+esc(m._id)+'">Correggi il risultato</button>':'')+'</div>';
       }
       h+='</div>';
     });
@@ -1052,6 +1074,7 @@ function trophyData(id){
     var gm=0;Object.keys(m.goals||{}).forEach(function(k){if(m.goals[k]>gm)gm=m.goals[k]});
     if(g>0&&g===gm)top++;
   }
+  var n7=0;D.history.forEach(function(m){if(m.gr&&m.gr[id]>=7)n7++});
   var pr=0;ex.pairs.forEach(function(p){if((p.a===id||p.b===id)&&p.n>pr)pr=p.n});
   var F=[
    ['🏟️','Presenze','partite giocate',s.pl,[1,5,10,25,50]],
@@ -1070,6 +1093,7 @@ function trophyData(id){
    ['🧱','Porta inviolata','partite senza subire gol',cs,[1,3,6,10,15]],
    ['🔥','Fedelissimo','presenze di fila',best,[3,5,8,12,20]],
    ['🤝','Inseparabili','partite con lo stesso compagno',pr,[3,5,8,12,20]],
+   ['⭐','Pagella alta','partite con voto medio da 7',n7,[1,3,6,10,15]],
    ['🛡️','Zero forfait','partite senza forfait',nf===0?s.pl:0,[5,10,20,35,50]]
   ];
   return F.map(function(f){var lv=0;while(lv<5&&f[3]>=f[4][lv])lv++;return {ico:f[0],name:f[1],unit:f[2],val:f[3],th:f[4],lv:lv}});
@@ -1185,6 +1209,13 @@ function saveRes(){
   if(r.sa+r.sb===0){toast('Inserisci il punteggio');return}
   var rec={date:c.date||'',nameA:tn(c,'A'),nameB:tn(c,'B'),sa:r.sa,sb:r.sb,teamA:c.teamA,teamB:c.teamB||[],goals:r.goals,assists:r.assists||{},mvp:r.mvp,by:UID};
   if(c.format)rec.format=c.format;
+  if(cm){if(cm.gr)rec.gr=cm.gr}
+  else{
+    var gs={},gn={};
+    Object.keys(D.grades).forEach(function(u){var v=D.grades[u];if(!v||v.matchId!==c.id||!v.g)return;Object.keys(v.g).forEach(function(pid){if(pid===u||typeof v.g[pid]!=='number'||!D.players[pid])return;gs[pid]=(gs[pid]||0)+v.g[pid];gn[pid]=(gn[pid]||0)+1})});
+    var gr={};Object.keys(gs).forEach(function(pid){gr[pid]=Math.round(gs[pid]/gn[pid]*10)/10});
+    if(Object.keys(gr).length)rec.gr=gr;
+  }
   rec.guests=cm?(cm.guests||[]):c.teamA.concat(c.teamB||[]).filter(isG).map(function(id){var g=P(id)||{};return {id:id,nick:g.nick,roles:g.roles,lv:g.lv}});
   fxOn({ok:function(){return S.tab==='pagella'&&D.cur&&D.cur.status==='closed'},run:function(){
     cascade(qa('.award'),90,24);qa('.award .v').forEach(function(e,i){setTimeout(function(){pop(e,1.25)},300+i*90)});
@@ -1217,6 +1248,14 @@ document.addEventListener('click',function(e){
   else if(a==='rating'){S.rating=!S.rating;if(S.rating)fxOn({run:function(){var b=$1('[data-a="rating"]');if(b&&b.nextElementSibling){reveal(b.nextElementSibling);cascade(qa('.rate button'),12,8)}}})}
   else if(a==='vote'){vote(id,+v)}
   else if(a==='sc'){var tt=el.dataset.t;S.res[tt]=Math.max(0,S.res[tt]+d);fxOn({run:function(){var b=$1('[data-big="'+tt+'"]');pop(b,d>0?1.6:.7);flash(b,tok(d>0?'--green':'--pink'))}})}
+  else if(a==='gr'){
+    var gc=D.cur;if(!gc||gc.status==='closed'||!teamsReady())return;
+    var gall=(gc.teamA||[]).concat(gc.teamB||[]);if(gall.indexOf(UID)<0||id===UID||gall.indexOf(id)<0)return;
+    var gm=Object.assign({},myGrades()),gv=gm[id],nv;
+    if(typeof gv!=='number')nv=d>0?6:null;else{nv=gv+d*0.5;if(nv<0)nv=null;if(nv>10)nv=10}
+    if(nv==null)delete gm[id];else gm[id]=nv;
+    if(nv!=null)fxOn({ok:function(){var x=D.grades[UID];return x&&x.g&&x.g[id]===nv},run:function(){var b=$1('[data-gout="g_'+id+'"]');pop(b,1.4);flash(b&&b.closest('.row'),tok('--green'))}});
+    setDoc('grades/'+UID,{matchId:gc.id,g:gm});return}
   else if(a==='goal'){S.res.goals[id]=Math.max(0,(S.res.goals[id]||0)+d);fxOn({run:function(){var b=$1('[data-gout="'+id+'"]');pop(b,d>0?1.7:.75);flash(b&&b.closest('.row'),tok(d>0?'--green':'--pink'))}})}
   else if(a==='rtab'){S.rt=v==='assist'?'assist':'gol';fxOn({run:function(){var p=qa('#screen .panel')[1];if(p){reveal(p);cascade(p.querySelectorAll('.row'),35,8)}}})}
   else if(a==='ast'){
@@ -1381,6 +1420,7 @@ async function init(){
   sub('rsvps',function(s){D.rsvps=toMap(s)});
   sub('levels',function(s){D.levels=toMap(s)});
   sub('mvpvotes',function(s){D.mvpv=toMap(s)});
+  sub('grades',function(s){D.grades=toMap(s)});
   sub('history',function(s){D.history=s.docs.map(function(d){var x=d.data();x._id=d.id;return x}).sort(function(a,b){return (b.date||'').localeCompare(a.date||'')})});
   DB.doc('matches/current').onSnapshot(function(s){D.cur=s.exists?s.data():null;changed()},function(e){S.err=e&&e.code||'err';changed()});
 }
