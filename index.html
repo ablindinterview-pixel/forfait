@@ -618,7 +618,7 @@ function mkImg(mid){
     drawLogo(x,76,50,96);x.fillStyle='#f2f5ff';x.font=ft(D1,60);x.textAlign='left';x.fillText('FORFAIT',190,124);
     x.fillStyle='#8d9ac0';x.font=ft(B1,34);x.fillText((m.format==='calciotto'?'CALCIOTTO · ':'')+dLabel(m.date).toUpperCase(),80,204);
     x.textAlign='center';
-    x.font=ft(D1,46);x.fillStyle='#3d8bff';x.fillText(tn(m,'A').toUpperCase(),270,300,440);x.fillStyle='#ff4d7d';x.fillText(tn(m,'B').toUpperCase(),810,300,440);
+    x.font=ft(D1,46);x.fillStyle=tcol(m,'A');x.fillText(tn(m,'A').toUpperCase(),270,300,440);x.fillStyle=tcol(m,'B');x.fillText(tn(m,'B').toUpperCase(),810,300,440);
     x.fillStyle='#f2f5ff';x.font=ft(D1,200);x.fillText((m.sa||0)+' – '+(m.sb||0),540,480);
     x.strokeStyle='#2f3d66';x.lineWidth=3;x.setLineDash([14,10]);x.beginPath();x.moveTo(80,540);x.lineTo(cw-80,540);x.stroke();x.setLineDash([]);
     function col(ids,x0,clr){
@@ -630,7 +630,7 @@ function mkImg(mid){
         y+=58;
       });
     }
-    col(m.teamA||[],70,'#3d8bff');col(m.teamB||[],570,'#ff4d7d');
+    col(m.teamA||[],70,tcol(m,'A'));col(m.teamB||[],570,tcol(m,'B'));
     x.strokeStyle='#ffe14a';x.lineWidth=5;x.strokeRect(80,1090,cw-160,170);
     x.textAlign='center';x.fillStyle='#ffe14a';x.font=ft(B1,36);x.fillText('MVP DELLA PARTITA',540,1148);
     x.fillStyle='#f2f5ff';x.font=ft(D1,80);x.fillText(pname(m.mvp),540,1232);
@@ -708,6 +708,8 @@ function copyRem(){
   legacy();
 }
 
+function tcol(o,k){var v=o&&o['color'+k];return COLORS.indexOf(v)>=0?v:COLORS[k==='A'?0:1]}
+function tcf(c){var h=c.replace('#',''),n=parseInt(h,16),l=(0.299*(n>>16)+0.587*((n>>8)&255)+0.114*(n&255))/255;return l>0.62?'#0b0f1a':'#fff'}
 function tn(o,k){var v=o&&o['name'+k];return v&&String(v).trim()?String(v):(k==='A'?'Chiari':'Scuri')}
 function limW(v,n){var w=v.split(/\s+/).filter(Boolean),t=w.slice(0,n).join(' ');if(/\s$/.test(v)&&t)t+=' ';return t}
 var LIM={aka:[3,20],motto:[6,40]};
@@ -863,8 +865,9 @@ function vPartita(){
   return h;
 }
 
+function tsw(k,c){return '<div class="swatches" style="margin:6px 0 10px">'+COLORS.map(function(x,i){return '<button class="swatch" style="background:'+x+'" data-a="tcol" data-t="'+k+'" data-v="'+i+'" aria-pressed="'+(tcol(c,k)===x)+'" aria-label="Colore '+(i+1)+'"></button>'}).join('')+'</div>'}
 function teamHtml(ids,name,col,cf){
-  var h='<div class="team" style="--c:var('+col+');--cf:'+cf+'"><h3>'+name+'</h3><div class="avg">Livello '+avg(ids).toFixed(2)+' · '+ids.length+' gioc.</div><div class="avg" style="padding-top:2px;font-weight:700">'+RL.map(function(q){return AB[q]+' '+cntP(ids,q)}).join(' · ')+'</div><ul>';
+  var h='<div class="team" style="--c:'+col+';--cf:'+cf+'"><h3>'+name+'</h3><div class="avg">Livello '+avg(ids).toFixed(2)+' · '+ids.length+' gioc.</div><div class="avg" style="padding-top:2px;font-weight:700">'+RL.map(function(q){return AB[q]+' '+cntP(ids,q)}).join(' · ')+'</div><ul>';
   ids.forEach(function(id){h+='<li'+(ADMIN?' data-a="pick" data-id="'+esc(id)+'" class="pk'+(S.pick===id?' sel':'')+'"':'')+'><span>'+esc(pname(id))+'<small class="tags">'+esc(roles(id).map(function(q){return AB[q]}).join(' · '))+'</small></span>'+dots(lvl(id).v)+'</li>'});
   return h+'</ul></div>';
 }
@@ -879,8 +882,8 @@ function vSquadre(){
     var stale=c.teamsKey!==yesKey();
     if(stale)h+='<div class="banner">Le presenze sono cambiate dopo il sorteggio. '+(ADMIN?'Rigenera le squadre per aggiornarle.':'L\'admin deve rigenerare le squadre.')+'</div>';
     var q=diff<0.15?'Molto equilibrate':diff<0.35?'Equilibrate':'Poco equilibrate';
-    h+='<div class="balance"><b>'+q+'</b><span class="label">scarto di livello '+diff.toFixed(2)+'</span></div><div class="teams">'+teamHtml(A,esc(tn(c,'A')),'--blue','#fff')+teamHtml(B,esc(tn(c,'B')),'--pink','var(--on-acc)')+'</div>';
-    if(ADMIN)h+='<div class="panel" style="margin-top:14px"><div class="label">Nomi delle squadre</div><label class="field" for="nameA" style="margin-top:8px"><span class="label">Prima squadra</span><input id="nameA" maxlength="20" value="'+esc(tn(c,'A'))+'" autocomplete="off"></label><label class="field" for="nameB"><span class="label">Seconda squadra</span><input id="nameB" maxlength="20" value="'+esc(tn(c,'B'))+'" autocomplete="off"></label></div>';
+    h+='<div class="balance"><b>'+q+'</b><span class="label">scarto di livello '+diff.toFixed(2)+'</span></div><div class="teams">'+teamHtml(A,esc(tn(c,'A')),tcol(c,'A'),tcf(tcol(c,'A')))+teamHtml(B,esc(tn(c,'B')),tcol(c,'B'),tcf(tcol(c,'B')))+'</div>';
+    if(ADMIN)h+='<div class="panel" style="margin-top:14px"><div class="label">Nomi e colori delle squadre</div><label class="field" for="nameA" style="margin-top:8px"><span class="label">Prima squadra</span><input id="nameA" maxlength="20" value="'+esc(tn(c,'A'))+'" autocomplete="off"></label>'+tsw('A',c)+'<label class="field" for="nameB"><span class="label">Seconda squadra</span><input id="nameB" maxlength="20" value="'+esc(tn(c,'B'))+'" autocomplete="off"></label>'+tsw('B',c)+'</div>';
     h+='<p class="note">Il sorteggio bilancia livello e ruoli, così ogni squadra ha porta, difesa, laterale e attacco quando possibile.'+(ADMIN?' Per scambiare due giocatori toccane uno di una squadra e uno dell\'altra.':'')+'</p>'+(ADMIN?'<button class="primary" style="margin-top:14px" data-a="regen">Rigenera squadre</button>':'');
     h+='<button class="ghost" data-a="why">'+(S.why?'Nascondi la spiegazione':'Perché questa divisione?')+'</button>'+(S.why?whyHtml(A,B):'');
   }
@@ -904,7 +907,7 @@ function vSquadre(){
 function vRisultato(){
   var h=banner()+'<h2>Risultato</h2><p class="sub">Inserisci punteggio, marcatori, assist e MVP.</p>',c=D.cur,corr=null;
   if(S.corr){corr=D.history.filter(function(x){return x._id===S.corr})[0]||null;if(!corr)S.corr=null}
-  if(corr){c={id:corr._id,date:corr.date,teamA:corr.teamA||[],teamB:corr.teamB||[],nameA:corr.nameA,nameB:corr.nameB,format:corr.format,status:'open'};h+='<div class="banner">Stai correggendo la partita del '+esc(dShort(corr.date))+'. Il risultato nuovo sostituisce quello salvato.</div><button class="ghost" data-a="corrno" style="margin:0 0 12px">Annulla la correzione</button>'}
+  if(corr){c={id:corr._id,date:corr.date,teamA:corr.teamA||[],teamB:corr.teamB||[],nameA:corr.nameA,nameB:corr.nameB,colorA:corr.colorA,colorB:corr.colorB,format:corr.format,status:'open'};h+='<div class="banner">Stai correggendo la partita del '+esc(dShort(corr.date))+'. Il risultato nuovo sostituisce quello salvato.</div><button class="ghost" data-a="corrno" style="margin:0 0 12px">Annulla la correzione</button>'}
   if(!c)return h+'<div class="panel empty">Nessuna partita da registrare.</div>';
   if(c.status==='closed')return h+'<div class="panel empty">Risultato già salvato: '+esc(tn(c,'A'))+' '+(c.sa||0)+' – '+(c.sb||0)+' '+esc(tn(c,'B'))+'. Convoca la prossima dalla scheda Partita.</div>'+(ADMIN?'<button class="ghost" data-a="editres" data-id="'+esc(c.id)+'">Correggi il risultato</button>':'');
   if(!corr&&!teamsReady())return h+'<div class="panel empty">Servono prima le squadre.'+(ADMIN?' Creale dalla scheda Squadre.':'')+'</div>';
@@ -914,7 +917,7 @@ function vRisultato(){
   var MV=corr?{t:{},n:0}:mvpVotes(),LD=corr?null:mvpLeader(MV.t);
   if(!S.res.mvp&&LD)S.res.mvp=LD;
   var r=S.res,A=c.teamA.filter(function(id){return P(id)}),B=(c.teamB||[]).filter(function(id){return P(id)});
-  h+='<div class="panel"><div class="score"><div><div class="tn" style="--c:var(--blue);--cf:#fff">'+esc(tn(c,'A'))+'</div><div class="big" data-big="sa">'+r.sa+'</div><div class="stepper"><button data-a="sc" data-t="sa" data-d="-1" aria-label="Meno un gol '+esc(tn(c,'A'))+'">−</button><button data-a="sc" data-t="sa" data-d="1" aria-label="Più un gol '+esc(tn(c,'A'))+'">+</button></div></div><div class="label">vs</div><div><div class="tn" style="--c:var(--pink);--cf:var(--on-acc)">'+esc(tn(c,'B'))+'</div><div class="big" data-big="sb">'+r.sb+'</div><div class="stepper"><button data-a="sc" data-t="sb" data-d="-1" aria-label="Meno un gol '+esc(tn(c,'B'))+'">−</button><button data-a="sc" data-t="sb" data-d="1" aria-label="Più un gol '+esc(tn(c,'B'))+'">+</button></div></div></div></div>';
+  h+='<div class="panel"><div class="score"><div><div class="tn" style="--c:'+tcol(c,'A')+';--cf:'+tcf(tcol(c,'A'))+'">'+esc(tn(c,'A'))+'</div><div class="big" data-big="sa">'+r.sa+'</div><div class="stepper"><button data-a="sc" data-t="sa" data-d="-1" aria-label="Meno un gol '+esc(tn(c,'A'))+'">−</button><button data-a="sc" data-t="sa" data-d="1" aria-label="Più un gol '+esc(tn(c,'A'))+'">+</button></div></div><div class="label">vs</div><div><div class="tn" style="--c:'+tcol(c,'B')+';--cf:'+tcf(tcol(c,'B'))+'">'+esc(tn(c,'B'))+'</div><div class="big" data-big="sb">'+r.sb+'</div><div class="stepper"><button data-a="sc" data-t="sb" data-d="-1" aria-label="Meno un gol '+esc(tn(c,'B'))+'">−</button><button data-a="sc" data-t="sb" data-d="1" aria-label="Più un gol '+esc(tn(c,'B'))+'">+</button></div></div></div></div>';
   h+='<div class="tabs2" style="margin-top:4px">'+[['gol','Marcatori'],['assist','Assist']].map(function(o){return '<button class="chip '+((S.rt||'gol')===o[0]?'on':'')+'" data-a="rtab" data-v="'+o[0]+'">'+o[1]+'</button>'}).join('')+'</div>';
   if(S.rt!=='assist'){
   var tot=0;Object.keys(r.goals).forEach(function(k){tot+=r.goals[k]});
@@ -1209,10 +1212,10 @@ function vote(id,v){
 function saveRes(){
   if(!ADMIN){toast('Solo l\'admin può farlo');return}
   var r=S.res,c=D.cur,cm=S.corr?D.history.filter(function(x){return x._id===S.corr})[0]:null;
-  if(cm)c={id:cm._id,date:cm.date,teamA:cm.teamA||[],teamB:cm.teamB||[],nameA:cm.nameA,nameB:cm.nameB,format:cm.format};
+  if(cm)c={id:cm._id,date:cm.date,teamA:cm.teamA||[],teamB:cm.teamB||[],nameA:cm.nameA,nameB:cm.nameB,colorA:cm.colorA,colorB:cm.colorB,format:cm.format};
   if(!r.mvp){toast('Scegli l\'MVP');return}
   if(r.sa+r.sb===0){toast('Inserisci il punteggio');return}
-  var rec={date:c.date||'',nameA:tn(c,'A'),nameB:tn(c,'B'),sa:r.sa,sb:r.sb,teamA:c.teamA,teamB:c.teamB||[],goals:r.goals,assists:r.assists||{},mvp:r.mvp,by:UID};
+  var rec={date:c.date||'',nameA:tn(c,'A'),nameB:tn(c,'B'),colorA:tcol(c,'A'),colorB:tcol(c,'B'),sa:r.sa,sb:r.sb,teamA:c.teamA,teamB:c.teamB||[],goals:r.goals,assists:r.assists||{},mvp:r.mvp,by:UID};
   if(c.format)rec.format=c.format;
   rec.guests=cm?(cm.guests||[]):c.teamA.concat(c.teamB||[]).filter(isG).map(function(id){var g=P(id)||{};return {id:id,nick:g.nick,roles:g.roles,lv:g.lv}});
   fxOn({ok:function(){return S.tab==='pagella'&&D.cur&&D.cur.status==='closed'},run:function(){
@@ -1305,6 +1308,7 @@ document.addEventListener('click',function(e){
     S.corr=em._id;S.tab='risultato';window.scrollTo(0,0);
   }
   else if(a==='corrno'){S.corr=null}
+  else if(a==='tcol'){var tk=el.dataset.t,nc=COLORS[+v],ok=tk==='A'?'B':'A',oc={};if(!D.cur)return;if(tcol(D.cur,ok)===nc){toast('È già il colore dell\'altra squadra');return}oc['color'+tk]=nc;upd('matches/current',oc)}
   else if(a==='tro'){openTrophies();return}
   else if(a==='awimg'){mkAwImg();return}
   else if(a==='mode'){
