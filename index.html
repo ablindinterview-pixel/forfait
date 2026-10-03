@@ -84,6 +84,16 @@ button:focus-visible{outline:3px dashed var(--ink);outline-offset:3px}
 .avw .crown{position:absolute;left:50%;top:-11px;width:22px;height:auto;margin-left:-16px;transform:rotate(-18deg);transform-origin:50% 100%;filter:drop-shadow(0 1px 1px rgba(0,0,0,.5));pointer-events:none}
 .avw.big .crown{width:26px;margin-left:-19px;top:-13px}
 .me .avw{margin-top:6px}
+.trobtn{display:flex;align-items:center;gap:12px;width:100%;text-align:left;color:var(--ink);font:inherit;cursor:pointer}
+.trobtn .trosum{flex:1;display:flex;gap:4px;font-size:20px;min-width:0;overflow:hidden}
+.trobtn b{font-size:14px;flex:none}
+#trosheet{position:fixed;inset:0;z-index:90;display:flex;align-items:flex-end;justify-content:center}
+#trosheet .tsb{position:absolute;inset:0;background:rgba(0,0,0,.55)}
+#trosheet .tsp{position:relative;width:100%;max-width:560px;max-height:85vh;display:flex;flex-direction:column;background:var(--surface);border:var(--bw) solid var(--bc);border-bottom:0;border-radius:18px 18px 0 0;padding:14px 14px max(14px,env(safe-area-inset-bottom))}
+#trosheet .tsh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+#trosheet .tsh button{width:auto;flex:none;padding:6px 16px}
+.trobtn .trosum small{font-size:12px;font-weight:600;color:var(--muted)}
+#trosheet .tsc{overflow:auto;-webkit-overflow-scrolling:touch}
 .tlist{display:grid;gap:8px;margin-top:10px}
 .tro{display:flex;align-items:center;gap:10px;border:var(--bw) solid var(--bc);border-radius:12px;padding:10px;opacity:.55;filter:grayscale(1);min-width:0}
 .tro.on{opacity:1;filter:none;border-color:var(--tc);background:rgba(255,255,255,.03)}
@@ -1078,10 +1088,10 @@ function trophyData(id){
   ];
   return F.map(function(f){var lv=0;while(lv<5&&f[3]>=f[4][lv])lv++;return {ico:f[0],name:f[1],unit:f[2],val:f[3],th:f[4],lv:lv}});
 }
-function trophyHtml(id){
+function trophyList(id){
   var T=trophyData(id),tot=T.length*5,got=T.reduce(function(n,t){return n+t.lv},0);
   T.sort(function(x,y){return y.lv-x.lv});
-  var h='<div class="panel"><span class="label">Trofei · '+got+' di '+tot+'</span><div class="tlist">';
+  var h='<div class="tlist">';
   T.forEach(function(t){
     var col=t.lv?TIERS[t.lv-1][1]:'#6b7694',nx=t.lv<5?t.th[t.lv]:t.th[4],pv=t.lv?t.th[t.lv-1]:0,pc=t.lv>=5?100:Math.round(t.val/nx*100);
     h+='<div class="tro'+(t.lv?' on':'')+'" style="--tc:'+col+'"><span class="ti">'+t.ico+'</span><div class="tb"><div class="tt"><b>'+esc(t.name)+'</b><span class="tl">'+(t.lv?TIERS[t.lv-1][0]:'Da sbloccare')+'</span></div>';
@@ -1089,7 +1099,20 @@ function trophyHtml(id){
     h+='<small>'+(t.lv>=5?'Livello massimo · '+t.val+' '+esc(t.unit):Math.min(t.val,nx)+'/'+nx+' '+esc(t.unit)+' per '+TIERS[t.lv][0])+'</small>';
     h+='<div class="pbar"><i style="width:'+Math.max(0,Math.min(100,pc))+'%"></i></div></div></div>';
   });
-  return h+'</div></div>';
+  return h+'</div>';
+}
+function trophyHtml(id){
+  var T=trophyData(id),tot=T.length*5,got=T.reduce(function(n,t){return n+t.lv},0);
+  var top=T.filter(function(t){return t.lv}).sort(function(x,y){return y.lv-x.lv}).slice(0,6).map(function(t){return '<span style="color:'+TIERS[t.lv-1][1]+'">'+t.ico+'</span>'}).join('');
+  return '<button class="panel trobtn" data-a="tro"><span class="label" style="margin:0">Trofei</span><span class="trosum">'+(top||'<small>Ancora nessuno</small>')+'</span><b>'+got+' di '+tot+' ›</b></button>';
+}
+function openTrophies(){
+  var o=document.createElement('div');o.id='trosheet';
+  o.innerHTML='<div class="tsb"></div><div class="tsp" role="dialog" aria-label="Trofei"><div class="tsh"><b>Trofei</b><button class="ghost mini" aria-label="Chiudi">Chiudi</button></div><div class="tsc">'+trophyList(UID)+'</div></div>';
+  function close(){o.remove();document.body.style.overflow=''}
+  o.querySelector('.tsb').onclick=close;o.querySelector('.tsh button').onclick=close;
+  document.body.appendChild(o);document.body.style.overflow='hidden';
+  try{A(o.querySelector('.tsp'),[{transform:'translateY(40px)',opacity:0},{transform:'none',opacity:1}],{duration:260,easing:'cubic-bezier(.2,.9,.3,1)'})}catch(e){}
 }
 function vProfilo(onb){
   var m=me()||S.draft,h=banner();
@@ -1282,6 +1305,7 @@ document.addEventListener('click',function(e){
     S.corr=em._id;S.tab='risultato';window.scrollTo(0,0);
   }
   else if(a==='corrno'){S.corr=null}
+  else if(a==='tro'){openTrophies();return}
   else if(a==='awimg'){mkAwImg();return}
   else if(a==='mode'){
     if(v==='light')document.documentElement.setAttribute('data-mode','light');else document.documentElement.removeAttribute('data-mode');
