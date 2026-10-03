@@ -618,7 +618,7 @@ function mkImg(mid){
     drawLogo(x,76,50,96);x.fillStyle='#f2f5ff';x.font=ft(D1,60);x.textAlign='left';x.fillText('FORFAIT',190,124);
     x.fillStyle='#8d9ac0';x.font=ft(B1,34);x.fillText((m.format==='calciotto'?'CALCIOTTO · ':'')+dLabel(m.date).toUpperCase(),80,204);
     x.textAlign='center';
-    x.font=ft(D1,46);x.fillStyle=tcol(m,'A');x.fillText(tn(m,'A').toUpperCase(),270,300,440);x.fillStyle=tcol(m,'B');x.fillText(tn(m,'B').toUpperCase(),810,300,440);
+    x.font=ft(D1,46);x.fillStyle=tvis(tcol(m,'A'));x.fillText(tn(m,'A').toUpperCase(),270,300,440);x.fillStyle=tvis(tcol(m,'B'));x.fillText(tn(m,'B').toUpperCase(),810,300,440);
     x.fillStyle='#f2f5ff';x.font=ft(D1,200);x.fillText((m.sa||0)+' – '+(m.sb||0),540,480);
     x.strokeStyle='#2f3d66';x.lineWidth=3;x.setLineDash([14,10]);x.beginPath();x.moveTo(80,540);x.lineTo(cw-80,540);x.stroke();x.setLineDash([]);
     function col(ids,x0,clr){
@@ -630,7 +630,7 @@ function mkImg(mid){
         y+=58;
       });
     }
-    col(m.teamA||[],70,tcol(m,'A'));col(m.teamB||[],570,tcol(m,'B'));
+    col(m.teamA||[],70,tvis(tcol(m,'A')));col(m.teamB||[],570,tvis(tcol(m,'B')));
     x.strokeStyle='#ffe14a';x.lineWidth=5;x.strokeRect(80,1090,cw-160,170);
     x.textAlign='center';x.fillStyle='#ffe14a';x.font=ft(B1,36);x.fillText('MVP DELLA PARTITA',540,1148);
     x.fillStyle='#f2f5ff';x.font=ft(D1,80);x.fillText(pname(m.mvp),540,1232);
@@ -708,7 +708,9 @@ function copyRem(){
   legacy();
 }
 
-function tcol(o,k){var v=o&&o['color'+k];return COLORS.indexOf(v)>=0?v:COLORS[k==='A'?0:1]}
+var TCOLS=[['#ffffff','Bianco'],['#111827','Nero'],['#ff3b3b','Rosso'],['#3d8bff','Blu'],['#ffe14a','Giallo'],['#39ff88','Verde'],['#ff8a3d','Arancione']];
+function tcol(o,k){var v=o&&o['color'+k];return TCOLS.some(function(t){return t[0]===v})||COLORS.indexOf(v)>=0?v:(k==='A'?'#3d8bff':'#ff3b3b')}
+function tvis(c){var n=parseInt(c.slice(1),16);return (0.299*(n>>16)+0.587*((n>>8)&255)+0.114*(n&255))<60?'#8d9ac0':c}
 function tcf(c){var h=c.replace('#',''),n=parseInt(h,16),l=(0.299*(n>>16)+0.587*((n>>8)&255)+0.114*(n&255))/255;return l>0.62?'#0b0f1a':'#fff'}
 function tn(o,k){var v=o&&o['name'+k];return v&&String(v).trim()?String(v):(k==='A'?'Chiari':'Scuri')}
 function limW(v,n){var w=v.split(/\s+/).filter(Boolean),t=w.slice(0,n).join(' ');if(/\s$/.test(v)&&t)t+=' ';return t}
@@ -865,7 +867,7 @@ function vPartita(){
   return h;
 }
 
-function tsw(k,c){return '<div class="swatches" style="margin:6px 0 10px">'+COLORS.map(function(x,i){return '<button class="swatch" style="background:'+x+'" data-a="tcol" data-t="'+k+'" data-v="'+i+'" aria-pressed="'+(tcol(c,k)===x)+'" aria-label="Colore '+(i+1)+'"></button>'}).join('')+'</div>'}
+function tsw(k,c){return '<div class="swatches" style="margin:6px 0 10px">'+TCOLS.map(function(t,i){return '<button class="swatch" style="background:'+t[0]+'" data-a="tcol" data-t="'+k+'" data-v="'+i+'" aria-pressed="'+(tcol(c,k)===t[0])+'" aria-label="'+t[1]+'"></button>'}).join('')+'</div>'}
 function teamHtml(ids,name,col,cf){
   var h='<div class="team" style="--c:'+col+';--cf:'+cf+'"><h3>'+name+'</h3><div class="avg">Livello '+avg(ids).toFixed(2)+' · '+ids.length+' gioc.</div><div class="avg" style="padding-top:2px;font-weight:700">'+RL.map(function(q){return AB[q]+' '+cntP(ids,q)}).join(' · ')+'</div><ul>';
   ids.forEach(function(id){h+='<li'+(ADMIN?' data-a="pick" data-id="'+esc(id)+'" class="pk'+(S.pick===id?' sel':'')+'"':'')+'><span>'+esc(pname(id))+'<small class="tags">'+esc(roles(id).map(function(q){return AB[q]}).join(' · '))+'</small></span>'+dots(lvl(id).v)+'</li>'});
@@ -1308,7 +1310,7 @@ document.addEventListener('click',function(e){
     S.corr=em._id;S.tab='risultato';window.scrollTo(0,0);
   }
   else if(a==='corrno'){S.corr=null}
-  else if(a==='tcol'){var tk=el.dataset.t,nc=COLORS[+v],ok=tk==='A'?'B':'A',oc={};if(!D.cur)return;if(tcol(D.cur,ok)===nc){toast('È già il colore dell\'altra squadra');return}oc['color'+tk]=nc;upd('matches/current',oc)}
+  else if(a==='tcol'){var tk=el.dataset.t,nc=TCOLS[+v][0],ok=tk==='A'?'B':'A',oc={};if(!D.cur)return;if(tcol(D.cur,ok)===nc){toast('È già il colore dell\'altra squadra');return}oc['color'+tk]=nc;upd('matches/current',oc)}
   else if(a==='tro'){openTrophies();return}
   else if(a==='awimg'){mkAwImg();return}
   else if(a==='mode'){
