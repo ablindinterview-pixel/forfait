@@ -958,7 +958,7 @@ function vRisultato(){
   h+='</div>';}
   h+=(corr?'':mvpVoteHtml(c,A.concat(B)));
   h+='<div class="panel"><div class="label" style="margin-bottom:8px">MVP della partita</div><div class="chips">';
-  A.concat(B).forEach(function(id){h+='<button class="chip '+(r.mvp===id?'on':'')+'" data-a="mvp" data-id="'+esc(id)+'">'+esc(pname(id))+(MV.t[id]?' · '+MV.t[id]:'')+'</button>'});
+  A.concat(B).filter(function(id){return id!==UID||LD===UID}).forEach(function(id){h+='<button class="chip '+(r.mvp===id?'on':'')+'" data-a="mvp" data-id="'+esc(id)+'">'+esc(pname(id))+(MV.t[id]?' · '+MV.t[id]:'')+'</button>'});
   h+='</div><p class="note">'+(corr?'Scegli l\'MVP corretto.':MV.n?(LD?'Il gruppo ha scelto '+esc(pname(LD))+': è già selezionato, puoi cambiarlo.':'Parità nei voti del gruppo: scegli tu. Accanto ai nomi vedi i voti ricevuti.'):'Nessun voto dal gruppo: scegli tu.')+'</p></div><button class="primary" data-a="save">Salva il risultato</button>';
   return h;
 }
