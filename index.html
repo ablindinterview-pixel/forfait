@@ -465,10 +465,13 @@ function np(n,x,y){return n+' '+(n===1?x:y)}
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
 function dLabel(iso){return iso?cap(new Date(iso+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})):'Data da definire'}
 function dShort(iso){return iso?new Date(iso+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'}):''}
+function endTs(c){if(!c||!c.date)return 0;var t=/^\d\d:\d\d$/.test(c.time||'')?c.time:'21:00';return new Date(c.date+'T'+t+':00').getTime()+3600000}
+function ended(c){c=c||D.cur;return !!c&&(c.status==='closed'||(endTs(c)>0&&Date.now()>=endTs(c)))}
+function endLabel(c){var t=new Date(endTs(c));return dLabel(c.date).toLowerCase()+' alle '+('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2)}
 function dlTs(iso){if(!iso)return 0;var d=new Date(iso+'T20:00:00');d.setDate(d.getDate()-1);return d.getTime()}
 function cdText(ts){var ms=ts-Date.now();if(ms<=0)return null;var t=Math.floor(ms/1000),dd=Math.floor(t/86400),hh=Math.floor(t%86400/3600),mm=Math.floor(t%3600/60),ss=t%60;function z(n){return n<10?'0'+n:''+n}return (dd?dd+(dd===1?' giorno ':' giorni ')+z(hh)+'h '+z(mm)+'m':z(hh)+':'+z(mm)+':'+z(ss))}
 function cdTick(){var e=document.getElementById('cd');if(!e)return;var ts=+e.dataset.ts,t=cdText(ts);e.classList.toggle('over',!t);e.classList.toggle('soon',!!t&&ts-Date.now()<3600000*3);e.querySelector('b').textContent=t||'Iscrizioni chiuse'}
-setInterval(cdTick,1000);
+var lastEnd=null;setInterval(function(){cdTick();var e=ended();if(lastEnd!==null&&e!==lastEnd&&S.ready&&!S.dirty){var a=document.activeElement;if(!(a&&a.tagName==='INPUT'))render()}lastEnd=e},1000);
 function deadline(iso){if(!iso)return 'il giorno prima';var d=new Date(iso+'T12:00:00');d.setDate(d.getDate()-1);return d.toLocaleDateString('it-IT',{weekday:'long'})+' alle 20:00'}
 function isoOf(d){var m=d.getMonth()+1,x=d.getDate();return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(x<10?'0':'')+x}
 function nextTuesday(){var d=new Date();d.setDate(d.getDate()+1);while(d.getDay()!==2)d.setDate(d.getDate()+1);return isoOf(d)}
@@ -732,6 +735,7 @@ function mvpLeader(t){var k=Object.keys(t).sort(function(a,b){return t[b]-t[a]})
 function mvpVoteHtml(c,all){
   var played=all.indexOf(UID)>=0,mv=D.mvpv[UID],mine=mv&&mv.matchId===c.id?mv.for:null,V=mvpVotes();
   var h='<div class="panel"><div class="label">Vota l\'MVP</div>';
+  if(!ended(c))return h+'<p class="note">Il voto si apre a fine partita, '+esc(endLabel(c))+'.</p></div>';
   if(!played)h+='<p class="note">Votano i giocatori che hanno giocato.</p>';
   else h+='<p class="note" style="margin:4px 0 10px">Scegli il migliore in campo. Non puoi votare te stesso e puoi cambiare voto finché l\'admin non salva il risultato.</p><div class="chips">'+all.filter(function(id){return id!==UID}).map(function(id){return '<button class="chip '+(mine===id?'on':'')+'" data-a="vmvp" data-id="'+esc(id)+'" aria-pressed="'+(mine===id)+'">'+esc(pname(id))+'</button>'}).join('')+'</div>';
   return h+'<p class="note">Hanno votato '+V.n+' su '+all.length+'.</p></div>';
@@ -881,9 +885,29 @@ function teamHtml(ids,name,col,cf){
   ids.forEach(function(id){h+='<li'+(ADMIN?' data-a="pick" data-id="'+esc(id)+'" class="pk'+(S.pick===id?' sel':'')+'"':'')+'><span>'+esc(pname(id))+'<small class="tags">'+esc(roles(id).map(function(q){return AB[q]}).join(' · '))+'</small></span>'+dots(lvl(id).v)+'</li>'});
   return h+'</ul></div>';
 }
+function ratingBlock(c){
+  var h='';
+  var rOpen=ended(c);
+  if(!rOpen)h+='<p class="note" style="margin-top:14px">I voti ai giocatori si aprono a fine partita, '+esc(endLabel(c))+'.</p>';
+  else h+='<button class="ghost" data-a="rating">'+(S.rating?'Chiudi i voti':'Dai i tuoi voti ai giocatori')+'</button>';
+  if(S.rating&&rOpen){
+    h+='<div class="panel" style="margin-top:12px"><div class="label">I tuoi voti · da 1 a 5</div><p class="note" style="margin:4px 0 6px">Nell\'app si vede solo la media del gruppo. Il livello di chi non ha voti vale 3.</p>';
+    var any=false;
+    allIds().forEach(function(id){
+      if(id===UID)return;any=true;
+      var mine=(D.levels[id]||{})['r_'+UID],L=lvl(id);
+      h+='<div class="row"><div class="name">'+esc(pname(id))+'<small>Media '+L.v.toFixed(1)+' · '+np(L.n,'voto','voti')+'</small></div><div class="rate">';
+      for(var i=1;i<=5;i++)h+='<button class="'+(mine===i?'on':'')+'" data-a="vote" data-id="'+esc(id)+'" data-v="'+i+'" aria-label="'+esc(pname(id))+' voto '+i+'">'+i+'</button>';
+      h+='</div></div>';
+    });
+    if(!any)h+='<div class="empty">Quando entrano gli altri giocatori puoi votarli qui.</div>';
+    h+='</div>';
+  }
+  return h;
+}
 function vSquadre(){
   var h=banner()+'<h2>Squadre</h2><p class="sub">Formazioni equilibrate in base a livello medio e ruoli dei giocatori.</p>',c=D.cur;
-  if(!c||c.status==='closed')return h+'<div class="panel empty">Nessuna partita aperta. Convocala dalla scheda Partita.</div>';
+  if(!c||c.status==='closed')return h+'<div class="panel empty">Nessuna partita aperta. Convocala dalla scheda Partita.</div>'+(c?ratingBlock(c):'');
   if(!c.official)h+='<div class="banner">La formazione non è ancora ufficiale. Le squadre usano i giocatori che hanno risposto "Ci sono".</div>';
   if(!teamsReady()){
     h+='<div class="panel empty">Le squadre non sono ancora state fatte.<br>'+(D.cur.official?'In formazione: ':'Confermati: ')+lineup().length+''+(ADMIN?'<br><br><button class="primary" data-a="regen">Crea le squadre</button>':'<br>Le squadre le crea l\'admin.')+'</div>';
@@ -897,20 +921,7 @@ function vSquadre(){
     h+='<p class="note">Il sorteggio bilancia livello e ruoli, così ogni squadra ha porta, difesa, laterale e attacco quando possibile.'+(ADMIN?' Per scambiare due giocatori toccane uno di una squadra e uno dell\'altra.':'')+'</p>'+(ADMIN?'<button class="primary" style="margin-top:14px" data-a="regen">Rigenera squadre</button>':'');
     h+='<button class="ghost" data-a="why">'+(S.why?'Nascondi la spiegazione':'Perché questa divisione?')+'</button>'+(S.why?whyHtml(A,B):'');
   }
-  h+='<button class="ghost" data-a="rating">'+(S.rating?'Chiudi i voti':'Dai i tuoi voti ai giocatori')+'</button>';
-  if(S.rating){
-    h+='<div class="panel" style="margin-top:12px"><div class="label">I tuoi voti · da 1 a 5</div><p class="note" style="margin:4px 0 6px">Nell\'app si vede solo la media del gruppo. Il livello di chi non ha voti vale 3.</p>';
-    var any=false;
-    allIds().forEach(function(id){
-      if(id===UID)return;any=true;
-      var mine=(D.levels[id]||{})['r_'+UID],L=lvl(id);
-      h+='<div class="row"><div class="name">'+esc(pname(id))+'<small>Media '+L.v.toFixed(1)+' · '+np(L.n,'voto','voti')+'</small></div><div class="rate">';
-      for(var i=1;i<=5;i++)h+='<button class="'+(mine===i?'on':'')+'" data-a="vote" data-id="'+esc(id)+'" data-v="'+i+'" aria-label="'+esc(pname(id))+' voto '+i+'">'+i+'</button>';
-      h+='</div></div>';
-    });
-    if(!any)h+='<div class="empty">Quando entrano gli altri giocatori puoi votarli qui.</div>';
-    h+='</div>';
-  }
+  h+=ratingBlock(c);
   return h;
 }
 
@@ -1215,6 +1226,7 @@ function rsvp(v){
   setDoc('rsvps/'+UID,rec);
 }
 function vote(id,v){
+  if(!ended()){toast('Si vota a fine partita');return}
   var cur=(D.levels[id]||{})['r_'+UID],val=cur===v?null:v,key='r_'+UID,o={};o[key]=val;
   if(val!=null)fxOn({ok:function(){return (D.levels[id]||{})['r_'+UID]===v},run:function(){var b=$1('[data-a="vote"][data-id="'+id+'"][data-v="'+v+'"]');pop(b,1.4);ring(b,tok('--green'))}});
   if(D.levels[id])upd('levels/'+id,o);else setDoc('levels/'+id,o);
@@ -1282,6 +1294,7 @@ document.addEventListener('click',function(e){
     }});
     upd('matches/current',{official:lineup()}).then(function(){toast('Formazione ufficiale')})}
   else if(a==='vmvp'){
+    if(!ended()){toast('Si vota a fine partita');return}
     var cm=D.cur,pl=cm&&cm.teamA?cm.teamA.concat(cm.teamB||[]):[];
     if(!me()||pl.indexOf(UID)<0||pl.indexOf(id)<0||id===UID||cm.status==='closed')return;
     var cv=D.mvpv[UID],cu=cv&&cv.matchId===cm.id?cv.for:null,nv=cu===id?null:id;
