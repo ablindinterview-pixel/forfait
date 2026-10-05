@@ -1227,6 +1227,7 @@ function rsvp(v){
 }
 function vote(id,v){
   if(!ended()){toast('Si vota a fine partita');return}
+  if(id===UID){toast('Non puoi votare te stesso');return}
   var cur=(D.levels[id]||{})['r_'+UID],val=cur===v?null:v,key='r_'+UID,o={};o[key]=val;
   if(val!=null)fxOn({ok:function(){return (D.levels[id]||{})['r_'+UID]===v},run:function(){var b=$1('[data-a="vote"][data-id="'+id+'"][data-v="'+v+'"]');pop(b,1.4);ring(b,tok('--green'))}});
   if(D.levels[id])upd('levels/'+id,o);else setDoc('levels/'+id,o);
