@@ -72,6 +72,13 @@ button:focus-visible{outline:3px dashed var(--ink);outline-offset:3px}
 .avatar.av-e{border-radius:0;clip-path:polygon(25% 4%,75% 4%,100% 50%,75% 96%,25% 96%,0 50%)}
 .avatar.av-s{border-radius:0;clip-path:polygon(0 0,100% 0,100% 58%,50% 100%,0 58%)}
 .avatar{overflow:hidden}.avatar .ph{width:100%;height:100%;object-fit:cover;display:block}
+#photolb{position:fixed;inset:0;z-index:95;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:20px}
+#photolb .lbc{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;color:#fff;max-width:100%}
+#photolb .avatar{width:min(78vw,340px);height:min(78vw,340px);border-width:4px}
+#photolb b{font:400 26px var(--display);text-transform:uppercase;margin-top:6px}
+#photolb span{font-weight:700;opacity:.85}#photolb small{opacity:.75;font-weight:600}
+#photolb .ghost{width:auto;margin-top:8px;color:#fff;border-color:#fff}
+.avatar[data-pid] .ph{cursor:zoom-in}
 .avatar .emo{font-size:19px;line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
 .avatar.big{width:56px;height:56px;font-size:24px}
 .avatar.big .emo{font-size:30px}
@@ -442,7 +449,7 @@ var AVC=[['i','Iniziale'],['n','Numero'],['e','Icona'],['f','Foto']];
 function avInner(id,p){p=p||P(id)||{};if(isG(id))return esc(ini(id));if(p.avc==='n'&&p.num!=null&&p.num!=='')return esc(p.num);if(p.avc==='f'&&typeof p.photo==='string'&&p.photo.indexOf('data:image/')===0)return '<img class="ph" alt="" src="'+esc(p.photo)+'">';if(p.avc==='e'&&p.avi)return '<span class="emo">'+esc(p.avi)+'</span>';return esc(ini(id))}
 var CROWN='<svg class="crown" viewBox="0 0 24 18" aria-label="MVP dell\'ultima partita"><path d="M2 15L1 4l6 5 5-8 5 8 6-5-1 11z" fill="#ffd23f" stroke="#7a5a00" stroke-width="1.4" stroke-linejoin="round"/><rect x="2" y="15" width="20" height="2.4" rx="1" fill="#e0a800" stroke="#7a5a00" stroke-width="1.2"/></svg>';
 function lastMvp(){var m=D.history&&D.history[0];return m&&m.mvp||null}
-function avHtml(id,p,big){p=p||P(id)||{};var s=isG(id)?'c':(p.avs||'c');var h='<div class="avatar av-'+s+(big?' big':'')+'" style="background:'+esc(p.color||(isG(id)?'#8d9ac0':COLORS[0]))+';color:#07101f">'+avInner(id,p)+'</div>';return (id&&id===lastMvp())?'<span class="avw'+(big?' big':'')+'">'+h+CROWN+'</span>':h}
+function avHtml(id,p,big){p=p||P(id)||{};var s=isG(id)?'c':(p.avs||'c');var h='<div class="avatar av-'+s+(big?' big':'')+'"'+(id&&!isG(id)?' data-pid="'+esc(id)+'"':'')+' style="background:'+esc(p.color||(isG(id)?'#8d9ac0':COLORS[0]))+';color:#07101f">'+avInner(id,p)+'</div>';return (id&&id===lastMvp())?'<span class="avw'+(big?' big':'')+'">'+h+CROWN+'</span>':h}
 function curId(){return D.cur?D.cur.id:null}
 function rsvpOf(id){if(isG(id))return guestList().some(function(g){return g.id===id})?'yes':null;var r=D.rsvps[id];return r&&r.matchId===curId()?r.v:null}
 function offList(){return D.cur&&D.cur.official||[]}
@@ -1224,11 +1231,21 @@ function render(){
 function changed(){S.ready=true;var a=document.activeElement;if(a&&a.tagName==='INPUT'&&document.getElementById('screen').contains(a)){S.dirty=true}else render()}
 
 /* azioni */
+function showPhoto(id){
+  var p=P(id);if(!p||p.avc!=='f'||!p.photo)return false;
+  var o=document.createElement('div');o.id='photolb';o.setAttribute('role','dialog');o.setAttribute('aria-label','Foto di '+pname(id));
+  o.innerHTML='<div class="lbc">'+avHtml(id,p,0).replace(/ data-pid="[^"]*"/,'')+'<b>'+esc(pname(id))+'</b>'+(p.aka?'<span>“'+esc(p.aka)+'”</span>':'')+(p.motto?'<small>“'+esc(p.motto)+'”</small>':'')+'<button class="ghost mini">Chiudi</button></div>';
+  function close(){o.remove();document.removeEventListener('keydown',kd)}
+  function kd(e){if(e.key==='Escape')close()}
+  o.onclick=close;document.addEventListener('keydown',kd);document.body.appendChild(o);
+  try{A(o.querySelector('.lbc'),[{transform:'scale(.85)',opacity:0},{transform:'none',opacity:1}],{duration:220,easing:'cubic-bezier(.2,.9,.3,1)'})}catch(e){}
+  return true}
+document.addEventListener('click',function(e){var t=e.target&&e.target.closest&&e.target.closest('.avatar[data-pid]');if(!t||t.closest('#me'))return;if(showPhoto(t.dataset.pid)){e.stopPropagation();e.preventDefault()}},true);
 function readPhoto(file){
   if(!/^image\//.test(file.type)){toast('Scegli un\'immagine');return}
   var u=URL.createObjectURL(file),im=new Image();
   im.onload=function(){
-    var n=160,c=document.createElement('canvas');c.width=c.height=n;var x=c.getContext('2d'),w=im.naturalWidth,h=im.naturalHeight,q=Math.min(w,h);
+    var n=320,c=document.createElement('canvas');c.width=c.height=n;var x=c.getContext('2d'),w=im.naturalWidth,h=im.naturalHeight,q=Math.min(w,h);
     x.fillStyle='#fff';x.fillRect(0,0,n,n);x.drawImage(im,(w-q)/2,(h-q)/2,q,q,0,0,n,n);URL.revokeObjectURL(u);
     var d=c.toDataURL('image/jpeg',0.78);setP({photo:d,avc:'f'});toast('Foto aggiornata')};
   im.onerror=function(){URL.revokeObjectURL(u);toast('Non riesco a leggere questa foto')};
