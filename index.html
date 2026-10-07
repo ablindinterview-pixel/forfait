@@ -427,7 +427,7 @@ function need(){return D.cur&&D.cur.format==='calciotto'?14:10}
 function per(){return need()/2}
 function fmtName(o){return o&&o.format==='calciotto'?'Calciotto':'Calcetto'}
 var DB=null,UID=null,MYNAME='',CANWRITE=true,ADMIN=false;
-var D={players:{},rsvps:{},levels:{},mvpv:{},history:[],cur:null};
+var D={players:{},rsvps:{},levels:{},mvpv:{},history:[],cur:null,last:null};
 var S={gl:3,gr:'Laterale',gname:'',corr:null,tab:'partita',sub:'marcatori',rating:false,editM:false,ready:false,err:'',dirty:false,
   res:{sa:0,sb:0,goals:{},assists:{},mvp:null,forMatch:null},
   draft:{nick:'',num:10,roles:['Attacco'],foot:'Destro',color:COLORS[0]}};
@@ -480,6 +480,11 @@ function dShort(iso){return iso?new Date(iso+'T12:00:00').toLocaleDateString('it
 function endTs(c){if(!c||!c.date)return 0;var t=/^\d\d:\d\d$/.test(c.time||'')?c.time:'21:00';return new Date(c.date+'T'+t+':00').getTime()+3600000}
 function ended(c){c=c||D.cur;return !!c&&(c.status==='closed'||(endTs(c)>0&&Date.now()>=endTs(c)))}
 function endLabel(c){var t=new Date(endTs(c));return dLabel(c.date).toLowerCase()+' alle '+('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2)}
+function vMatch(){var c=D.cur;if(c&&(c.status==='closed'||ended(c)))return c;return D.last||null}
+function lastCard(){
+  var l=D.last,c=D.cur;if(!l||!c||c.status==='closed'||ended(c))return '';
+  var h='<div class="panel lastm"><div class="label">Partita appena giocata · '+esc(dShort(l.date))+'</div><div class="res" style="font:400 22px var(--display);text-transform:uppercase;margin:6px 0">'+esc(tn(l,'A'))+' '+(l.sa||0)+' – '+(l.sb||0)+' '+esc(tn(l,'B'))+'</div><div class="note" style="margin:0 0 8px">MVP: <b>'+esc(pname(l.mvp))+'</b></div><button class="ghost" data-a="img" data-id="'+esc(l.id)+'">Riepilogo da condividere</button><button class="ghost" data-a="tab" data-v="pagella">Vai alla Pagella</button></div>';
+  return h}
 function parts(c){return c&&c.teamA?c.teamA.concat(c.teamB||[]).filter(function(id){return P(id)}):[]}
 function closedReg(c){return !!c&&!c.official&&c.date&&Date.now()>=dlTs(c.date)}
 function voteCta(c){
@@ -831,7 +836,7 @@ function vPartita(){
     h+='<div class="panel empty">'+(ADMIN?'Crea la partita: poi imposti data, ora e campo.<br><br><button class="primary" data-a="mkmatch">Crea la partita di martedì</button>':'Quando l\'admin la crea, qui compaiono data, campo e presenze.')+'</div>';
     return h;
   }
-  h+=voteCta(c);
+  h+=voteCta(vMatch())+lastCard();
   if(c.status==='closed'){
     h+='<div class="closed"><div class="label">Partita chiusa</div><div class="res">'+esc(tn(c,'A'))+' '+(c.sa||0)+' – '+(c.sb||0)+' '+esc(tn(c,'B'))+'</div><div>MVP: <b>'+esc(pname(c.mvp))+'</b></div></div>';
     h+='<button class="ghost" data-a="img" data-id="'+esc(c.id)+'">Crea il riepilogo da condividere</button>';
@@ -931,7 +936,7 @@ function ratingBlock(c){
 }
 function vSquadre(){
   var h=banner()+'<h2>Squadre</h2><p class="sub">Formazioni equilibrate in base a livello medio e ruoli dei giocatori.</p>',c=D.cur;
-  if(!c||c.status==='closed')return h+'<div class="panel empty">Nessuna partita aperta. Convocala dalla scheda Partita.</div>'+(c?ratingBlock(c):'');
+  if(!c||c.status==='closed')return h+'<div class="panel empty">Nessuna partita aperta. Convocala dalla scheda Partita.</div>'+(c?ratingBlock(vMatch()||c):'');
   if(!c.official)h+='<div class="banner">La formazione non è ancora ufficiale. Le squadre usano i giocatori che hanno risposto "Ci sono".</div>';
   if(!teamsReady()){
     h+='<div class="panel empty">Le squadre non sono ancora state fatte.<br>'+(D.cur.official?'In formazione: ':'Confermati: ')+lineup().length+''+(ADMIN?'<br><br><button class="primary" data-a="regen">Crea le squadre</button>':'<br>Le squadre le crea l\'admin.')+'</div>';
@@ -945,7 +950,7 @@ function vSquadre(){
     h+='<p class="note">Il sorteggio bilancia livello e ruoli, così ogni squadra ha porta, difesa, laterale e attacco quando possibile.'+(ADMIN?' Per scambiare due giocatori toccane uno di una squadra e uno dell\'altra.':'')+'</p>'+(ADMIN?'<button class="primary" style="margin-top:14px" data-a="regen">Rigenera squadre</button>':'');
     h+='<button class="ghost" data-a="why">'+(S.why?'Nascondi la spiegazione':'Perché questa divisione?')+'</button>'+(S.why?whyHtml(A,B):'');
   }
-  h+=ratingBlock(c);
+  h+=ratingBlock(vMatch()||c);
   return h;
 }
 
@@ -1273,9 +1278,9 @@ function rsvp(v){
   setDoc('rsvps/'+UID,rec);
 }
 function vote(id,v){
-  if(!ended()){toast('Si vota a fine partita');return}
+  var vm0=vMatch();if(!vm0||!ended(vm0)){toast('Si vota a fine partita');return}
   if(id===UID){toast('Non puoi votare te stesso');return}
-  var pl0=parts(D.cur);if(pl0.indexOf(UID)<0||pl0.indexOf(id)<0||isG(id)){toast('Votano e si votano solo i giocatori della partita');return}
+  var pl0=parts(vm0);if(pl0.indexOf(UID)<0||pl0.indexOf(id)<0||isG(id)){toast('Votano e si votano solo i giocatori della partita');return}
   var cur=(D.levels[id]||{})['r_'+UID],val=cur===v?null:v,key='r_'+UID,o={};o[key]=val;
   if(val!=null)fxOn({ok:function(){return (D.levels[id]||{})['r_'+UID]===v},run:function(){var b=$1('[data-a="vote"][data-id="'+id+'"][data-v="'+v+'"]');pop(b,1.4);ring(b,tok('--green'))}});
   if(D.levels[id])upd('levels/'+id,o);else setDoc('levels/'+id,o);
@@ -1289,17 +1294,24 @@ function saveRes(){
   var rec={date:c.date||'',nameA:tn(c,'A'),nameB:tn(c,'B'),colorA:tcol(c,'A'),colorB:tcol(c,'B'),sa:r.sa,sb:r.sb,teamA:c.teamA,teamB:c.teamB||[],goals:r.goals,assists:r.assists||{},mvp:r.mvp,by:UID};
   if(c.format)rec.format=c.format;
   rec.guests=cm?(cm.guests||[]):c.teamA.concat(c.teamB||[]).filter(isG).map(function(id){var g=P(id)||{};return {id:id,nick:g.nick,roles:g.roles,lv:g.lv}});
-  fxOn({ok:function(){return S.tab==='pagella'&&D.cur&&D.cur.status==='closed'},run:function(){
+  fxOn({ok:function(){return S.tab==='pagella'},run:function(){
     cascade(qa('.award'),90,24);qa('.award .v').forEach(function(e,i){setTimeout(function(){pop(e,1.25)},300+i*90)});
     grow(qa('.hbar i'));cascade(qa('.tabs2 .chip'),40,10);
   }});
-  setDoc('history/'+c.id,rec).then(function(){return (cm&&D.cur&&cm._id!==D.cur.id)?null:upd('matches/current',{status:'closed',sa:r.sa,sb:r.sb,mvp:r.mvp})}).then(function(){S.corr=null;S.tab='pagella';S.sub='marcatori';toast('Risultato salvato');render()});
+  setDoc('history/'+c.id,rec).then(function(){
+    var f={sa:r.sa,sb:r.sb,mvp:r.mvp};
+    if(cm){var ps=[];if(D.cur&&cm._id===D.cur.id)ps.push(upd('matches/current',Object.assign({status:'closed'},f)));if(D.last&&D.last.id===cm._id)ps.push(upd('matches/last',f));return Promise.all(ps)}
+    var lr=Object.assign({},D.cur,f,{status:'closed'});
+    return setDoc('matches/last',lr).then(function(){return nextMatchDoc(D.cur)})
+  }).then(function(){S.corr=null;S.tab='pagella';S.sub='marcatori';toast('Risultato salvato');render()});
 }
+function nextMatchDoc(c){var d=new Date((c.date||nextTuesday())+'T12:00:00');d.setDate(d.getDate()+7);
+  return setDoc('matches/current',{id:'m'+Date.now().toString(36),date:isoOf(d),time:c.time||'',field:c.field||'',status:'open'})}
 function newMatch(){
   if(!ADMIN){toast('Solo l\'admin può farlo');return}
   var c=D.cur,d=new Date((c.date||nextTuesday())+'T12:00:00');d.setDate(d.getDate()+7);
   fxOn({ok:function(){return D.cur&&D.cur.id!==c.id&&D.cur.status==='open'},run:function(){cascade(qa('#screen .panel'),90,22);pop($1('.count'),1.3)}});
-  setDoc('matches/current',{id:'m'+Date.now().toString(36),date:isoOf(d),time:c.time||'',field:c.field||'',status:'open'}).then(function(){toast('Nuova partita convocata')});
+  (c.status==='closed'?setDoc('matches/last',c):Promise.resolve()).then(function(){return nextMatchDoc(c)}).then(function(){toast('Nuova partita convocata')});
 }
 function mkMatch(){if(!ADMIN){toast('Solo l\'admin può farlo');return}
  setDoc('matches/current',{id:'m'+Date.now().toString(36),date:nextTuesday(),time:'',field:'',status:'open'})}
@@ -1497,7 +1509,8 @@ async function init(){
   sub('levels',function(s){D.levels=toMap(s)});
   sub('mvpvotes',function(s){D.mvpv=toMap(s)});
   sub('history',function(s){D.history=s.docs.map(function(d){var x=d.data();x._id=d.id;return x}).sort(function(a,b){return (b.date||'').localeCompare(a.date||'')})});
-  DB.doc('matches/current').onSnapshot(function(s){D.cur=s.exists?s.data():null;changed()},function(e){S.err=e&&e.code||'err';changed()});
+  DB.doc('matches/last').onSnapshot(function(s){D.last=s.exists?s.data():null;changed()},function(){});
+  DB.doc('matches/current').onSnapshot(function(s){D.cur=s.exists?s.data():null;if(ADMIN&&D.cur&&D.cur.status==='closed'&&!S.autoNext){S.autoNext=1;newMatch()}changed()},function(e){S.err=e&&e.code||'err';changed()});
 }
 init();
 })();
