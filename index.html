@@ -71,6 +71,7 @@ button:focus-visible{outline:3px dashed var(--ink);outline-offset:3px}
 .avatar.av-q{border-radius:10px}
 .avatar.av-e{border-radius:0;clip-path:polygon(25% 4%,75% 4%,100% 50%,75% 96%,25% 96%,0 50%)}
 .avatar.av-s{border-radius:0;clip-path:polygon(0 0,100% 0,100% 58%,50% 100%,0 58%)}
+.avatar{overflow:hidden}.avatar .ph{width:100%;height:100%;object-fit:cover;display:block}
 .avatar .emo{font-size:19px;line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
 .avatar.big{width:56px;height:56px;font-size:24px}
 .avatar.big .emo{font-size:30px}
@@ -437,8 +438,8 @@ function roles(id){var p=P(id);return p&&p.roles&&p.roles.length?p.roles:['Later
 function ini(id){return pname(id).charAt(0).toUpperCase()}
 var AVI=['⚽','🧤','🦁','🐺','🦅','🐂','🔥','⚡','👑','🚀','🎯','🛡️'];
 var AVS=[['c','Cerchio'],['q','Quadrato'],['e','Esagono'],['s','Scudo']];
-var AVC=[['i','Iniziale'],['n','Numero'],['e','Icona']];
-function avInner(id,p){p=p||P(id)||{};if(isG(id))return esc(ini(id));if(p.avc==='n'&&p.num!=null&&p.num!=='')return esc(p.num);if(p.avc==='e'&&p.avi)return '<span class="emo">'+esc(p.avi)+'</span>';return esc(ini(id))}
+var AVC=[['i','Iniziale'],['n','Numero'],['e','Icona'],['f','Foto']];
+function avInner(id,p){p=p||P(id)||{};if(isG(id))return esc(ini(id));if(p.avc==='n'&&p.num!=null&&p.num!=='')return esc(p.num);if(p.avc==='f'&&typeof p.photo==='string'&&p.photo.indexOf('data:image/')===0)return '<img class="ph" alt="" src="'+esc(p.photo)+'">';if(p.avc==='e'&&p.avi)return '<span class="emo">'+esc(p.avi)+'</span>';return esc(ini(id))}
 var CROWN='<svg class="crown" viewBox="0 0 24 18" aria-label="MVP dell\'ultima partita"><path d="M2 15L1 4l6 5 5-8 5 8 6-5-1 11z" fill="#ffd23f" stroke="#7a5a00" stroke-width="1.4" stroke-linejoin="round"/><rect x="2" y="15" width="20" height="2.4" rx="1" fill="#e0a800" stroke="#7a5a00" stroke-width="1.2"/></svg>';
 function lastMvp(){var m=D.history&&D.history[0];return m&&m.mvp||null}
 function avHtml(id,p,big){p=p||P(id)||{};var s=isG(id)?'c':(p.avs||'c');var h='<div class="avatar av-'+s+(big?' big':'')+'" style="background:'+esc(p.color||(isG(id)?'#8d9ac0':COLORS[0]))+';color:#07101f">'+avInner(id,p)+'</div>';return (id&&id===lastMvp())?'<span class="avw'+(big?' big':'')+'">'+h+CROWN+'</span>':h}
@@ -1171,6 +1172,8 @@ function vProfilo(onb){
   var av=m.avc||'i',avs=m.avs||'c';
   h+='<div class="panel"><span class="label">Avatar</span><div class="avrow">'+avHtml(UID,m,1)+'<span class="note" style="margin:0">Così ti vedono nell\'elenco del gruppo.</span></div><div class="grp"><span class="label sm">Contenuto</span><div class="chips">'+AVC.map(function(o){return '<button class="chip '+(av===o[0]?'on':'')+'" data-a="avc" data-v="'+o[0]+'" aria-pressed="'+(av===o[0])+'">'+o[1]+'</button>'}).join('')+'</div></div>';
   if(av==='e')h+='<div class="grp"><span class="label sm">Icona</span><div class="emos">'+AVI.map(function(x,i){return '<button class="emob '+((m.avi||AVI[0])===x?'on':'')+'" data-a="avi" data-v="'+i+'" aria-pressed="'+((m.avi||AVI[0])===x)+'">'+x+'</button>'}).join('')+'</div></div>';
+  h+='<input id="photo" type="file" accept="image/*" hidden>';
+  if(av==='f')h+='<div class="grp"><span class="label sm">Foto</span><div class="chips"><button class="chip" data-a="phpick">'+(m.photo?'Cambia foto':'Scegli una foto')+'</button>'+(m.photo?'<button class="chip" data-a="phdel">Rimuovi</button>':'')+'</div><p class="note">La foto è piccola e si ritaglia al centro. La vedono tutti i giocatori del gruppo.</p></div>';
   h+='<div class="grp" style="margin-bottom:0"><span class="label sm">Forma</span><div class="chips">'+AVS.map(function(o){return '<button class="chip '+(avs===o[0]?'on':'')+'" data-a="avs" data-v="'+o[0]+'" aria-pressed="'+(avs===o[0])+'">'+o[1]+'</button>'}).join('')+'</div><p class="note">Lo sfondo usa il colore scelto sopra.</p></div></div>';
   if(!onb&&me())h+=trophyHtml(UID);
   h+='<div class="grp"><span class="label">Aspetto dell\'app · solo su questo dispositivo</span><div class="chips">'+[['dark','Scuro'],['light','Chiaro']].map(function(o){var lt=document.documentElement.getAttribute('data-mode')==='light';return '<button class="chip '+((o[0]==='light')===lt?'on':'')+'" data-a="mode" data-v="'+o[0]+'">'+o[1]+'</button>'}).join('')+'</div></div>';
@@ -1221,6 +1224,15 @@ function render(){
 function changed(){S.ready=true;var a=document.activeElement;if(a&&a.tagName==='INPUT'&&document.getElementById('screen').contains(a)){S.dirty=true}else render()}
 
 /* azioni */
+function readPhoto(file){
+  if(!/^image\//.test(file.type)){toast('Scegli un\'immagine');return}
+  var u=URL.createObjectURL(file),im=new Image();
+  im.onload=function(){
+    var n=160,c=document.createElement('canvas');c.width=c.height=n;var x=c.getContext('2d'),w=im.naturalWidth,h=im.naturalHeight,q=Math.min(w,h);
+    x.fillStyle='#fff';x.fillRect(0,0,n,n);x.drawImage(im,(w-q)/2,(h-q)/2,q,q,0,0,n,n);URL.revokeObjectURL(u);
+    var d=c.toDataURL('image/jpeg',0.78);setP({photo:d,avc:'f'});toast('Foto aggiornata')};
+  im.onerror=function(){URL.revokeObjectURL(u);toast('Non riesco a leggere questa foto')};
+  im.src=u}
 function setP(patch){if(me())upd('players/'+UID,patch);else{Object.keys(patch).forEach(function(k){S.draft[k]=patch[k]});render()}}
 function rsvp(v){
   if(!me()||v===rsvpOf(UID))return;
@@ -1414,13 +1426,15 @@ document.addEventListener('click',function(e){
   else if(a==='role2'){var q2=(m.roles||[]).slice(0,1);if(q2[0]===v)return;if((m.roles||[])[1]===v){setP({roles:q2});pop($1('[data-a="role2"][data-v="'+v+'"]'),.8)}else{q2.push(v);setP({roles:q2});fxOn({run:function(){var b=$1('[data-a="role2"][data-v="'+v+'"]');pop(b,1.25);ring(b,tok('--green'));pop($1('.shirt'),1.08)}})}}
   else if(a==='foot'){setP({foot:v});fxOn({ok:function(){return (me()||S.draft).foot===v},run:function(){var b=$1('[data-a="foot"][data-v="'+v+'"]');pop(b,1.22);ring(b,tok('--green'))}})}
   else if(a==='color'){setP({color:COLORS[+v]});fxOn({ok:function(){return (me()||S.draft).color===COLORS[+v]},run:function(){var b=$1('[data-a="color"][data-v="'+v+'"]');pop(b,1.4);ring(b,COLORS[+v]);var sh=$1('.shirt');pop(sh,1.15);ring(sh,COLORS[+v])}})}
-  else if(a==='avc'){setP({avc:v});fxOn({ok:function(){return (me()||S.draft).avc===v},run:function(){var b=$1('[data-a="avc"][data-v="'+v+'"]');pop(b,1.2);ring(b,tok('--green'));var x=$1('.fig .avatar');pop(x,1.3);ring(x,tok('--green'))}})}
+  else if(a==='phpick'){var pi=document.getElementById('photo');if(pi)pi.click()}
+  else if(a==='phdel'){setP({photo:'',avc:'i'})}
+  else if(a==='avc'){if(v==='f'&&!m.photo){var pi2=document.getElementById('photo');if(pi2)pi2.click();return}setP({avc:v});fxOn({ok:function(){return (me()||S.draft).avc===v},run:function(){var b=$1('[data-a="avc"][data-v="'+v+'"]');pop(b,1.2);ring(b,tok('--green'));var x=$1('.fig .avatar');pop(x,1.3);ring(x,tok('--green'))}})}
   else if(a==='avi'){var ic=AVI[+v];setP({avi:ic,avc:'e'});fxOn({ok:function(){return (me()||S.draft).avi===ic},run:function(){var b=$1('[data-a="avi"][data-v="'+v+'"]');pop(b,1.35);var x=$1('.fig .avatar');pop(x,1.3);ring(x,tok('--green'))}})}
   else if(a==='avs'){setP({avs:v});fxOn({ok:function(){return (me()||S.draft).avs===v},run:function(){var b=$1('[data-a="avs"][data-v="'+v+'"]');pop(b,1.2);ring(b,tok('--green'));var x=$1('.fig .avatar');pop(x,1.3)}})}
   else if(a==='join'){
     var dr=S.draft,nick=(dr.nick||'').trim();
     if(!nick){toast('Scrivi il tuo nome');return}
-    setDoc('players/'+UID,{nick:nick,aka:dr.aka||'',motto:dr.motto||'',num:dr.num,roles:dr.roles,foot:dr.foot,color:dr.color,avc:dr.avc||'i',avi:dr.avi||AVI[0],avs:dr.avs||'c',forfeits:0}).then(function(){S.tab='partita';fxOn({run:function(){cascade(qa('#screen .panel'),90,22)}});toast('Benvenuto, '+nick)});
+    setDoc('players/'+UID,{nick:nick,aka:dr.aka||'',motto:dr.motto||'',num:dr.num,roles:dr.roles,foot:dr.foot,color:dr.color,avc:dr.avc||'i',photo:dr.photo||'',avi:dr.avi||AVI[0],avs:dr.avs||'c',forfeits:0}).then(function(){S.tab='partita';fxOn({run:function(){cascade(qa('#screen .panel'),90,22)}});toast('Benvenuto, '+nick)});
   }
   render();
 });
@@ -1436,6 +1450,7 @@ document.addEventListener('input',function(e){
   }
 });
 document.addEventListener('change',function(e){
+  var t0=e.target;if(t0&&t0.id==='photo'&&t0.files&&t0.files[0]){var fl=t0.files[0];t0.value='';readPhoto(fl);return}
   var el=e.target,id=el.id;
   if(id==='nick'&&me()){var nv=el.value.replace(/[<>&"]/g,'').trim().slice(0,14);if(nv)upd('players/'+UID,{nick:nv})}
   else if((id==='aka'||id==='motto')&&me()){var av=limField(id,el.value).trim(),ao={};ao[id]=av;upd('players/'+UID,ao)}
