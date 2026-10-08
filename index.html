@@ -138,6 +138,9 @@ button:focus-visible{outline:3px dashed var(--ink);outline-offset:3px}
 .votecta .vcb{display:grid;gap:8px}.votecta .primary{background:var(--surface);color:var(--ink)}
 @keyframes vcp{50%{box-shadow:var(--so) var(--so) 0 var(--shadow),0 0 0 6px rgba(255,225,74,.35)}}@media (prefers-reduced-motion:reduce){.votecta{animation:none}}
 select{font:inherit;font-weight:700;color:var(--ink);background:var(--surface);border:var(--bw) solid var(--bc);border-radius:10px;padding:6px 8px;max-width:48%}
+.acch{display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:0;padding:2px 0;color:var(--ink);font:inherit;cursor:pointer;text-align:left}
+.acch .chev{font-size:26px;font-weight:700;color:var(--muted);line-height:1;transition:transform .2s ease}.panel.acc.open .acch .chev{transform:rotate(90deg)}
+.panel.acc.open .acch{margin-bottom:6px}
 .tlist{display:grid;gap:8px;margin-top:10px}
 .tro{display:flex;align-items:center;gap:10px;border:var(--bw) solid var(--bc);border-radius:12px;padding:10px;opacity:.55;filter:grayscale(1);min-width:0}
 .tro.on{opacity:1;filter:none;border-color:var(--tc);background:rgba(255,255,255,.03)}
@@ -625,6 +628,12 @@ function remHtml(){
   var miss=allIds().filter(function(id){return !isPh(id)&&!rsvpOf(id)});
   return '<div class="panel"><div class="label">Promemoria per il gruppo</div><p class="note" style="margin:4px 0 8px">'+(miss.length?'Non hanno ancora risposto: '+esc(miss.map(pname).join(', '))+'.':'Hanno risposto tutti.')+' Copia il messaggio e incollalo nel gruppo.</p><textarea id="remtxt" class="rem" readonly rows="6">'+esc(remMsg())+'</textarea><button class="ghost" data-a="copy">Copia il messaggio</button></div>';
 }
+function accWrap(key,html){
+  if(!html)return '';
+  var m=html.match(/^<div class="panel">(<div class="label"[^>]*>(.*?)<\/div>)/);if(!m)return html;
+  var open=!!(S.acc&&S.acc[key]);
+  var rest=html.slice(m[0].length);
+  return '<div class="panel acc'+(open?' open':'')+'"><button class="acch" data-a="acc" data-v="'+key+'" aria-expanded="'+open+'"><span class="label" style="margin:0">'+m[2]+'</span><span class="chev">›</span></button>'+(open?rest:'</div>')}
 function phHtml(){
   var L=allIds().filter(isPh),R=allIds().filter(function(id){return !isPh(id)});
   if(!L.length)return '';
@@ -942,8 +951,7 @@ function vPartita(){
       h+='</div>';
     }
   }
-  if(shown<need()&&!off)h+='<div class="panel"><div class="label">Invita gli altri</div><p class="note" style="margin-top:4px">Gli amici entrano aprendo il link, accedendo con Google e creando il proprio profilo.</p></div>';
-  if(ADMIN){h+=guestHtml(off);h+=remHtml();h+=phHtml();h+=adminHtml(off)}
+  if(ADMIN){h+=accWrap('guest',guestHtml(off));h+=accWrap('rem',remHtml());h+=accWrap('ph',phHtml());h+=accWrap('adm',adminHtml(off))}
   h+=helpBlock();
   return h;
 }
@@ -1511,6 +1519,7 @@ document.addEventListener('click',function(e){
       var n=Object.assign({},m);delete n._id;n.teamA=rl(m.teamA);n.teamB=rl(m.teamB);n.goals=mg(m.goals);n.assists=mg(m.assists);if(n.mvp===id)n.mvp=to;
       return setDoc('history/'+m._id,n)});
     Promise.all(ops).then(function(){return del('players/'+id)}).then(function(){toast(nm0+' collegato a '+nm1)})}
+  else if(a==='acc'){S.acc=S.acc||{};S.acc[v]=!S.acc[v]}
   else if(a==='pteam'){var pp=S.past;if(!ADMIN||!pp)return;var wl=v==='A'?'teamA':'teamB',ol=v==='A'?'teamB':'teamA',ix=pp[wl].indexOf(id);pp[ol]=pp[ol].filter(function(x){return x!==id});if(ix>=0)pp[wl].splice(ix,1);else pp[wl].push(id)}
   else if(a==='pgo'){var pq=S.past;if(!ADMIN||!pq)return;var pdv=(document.getElementById('pdate')||{}).value||pq.date;if(!pdv){toast('Scegli la data');return}if(!pq.teamA.length||!pq.teamB.length){toast('Servono giocatori in entrambe le squadre');return}pq.date=pdv;pq.stage='res';window.scrollTo(0,0)}
   else if(a==='tcol'){var tk=el.dataset.t,nc=TCOLS[+v][0],ok=tk==='A'?'B':'A',oc={};if(!D.cur)return;if(tcol(D.cur,ok)===nc){toast('È già il colore dell\'altra squadra');return}oc['color'+tk]=nc;upd('matches/current',oc)}
