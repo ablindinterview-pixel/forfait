@@ -109,6 +109,7 @@ button:focus-visible{outline:3px dashed var(--ink);outline-offset:3px}
 .votecta .label{color:inherit;opacity:.8;margin:0}.votecta b{display:block;font:400 24px/1.1 var(--display);text-transform:uppercase;margin:4px 0 12px}
 .votecta .vcb{display:grid;gap:8px}.votecta .primary{background:var(--surface);color:var(--ink)}
 @keyframes vcp{50%{box-shadow:var(--so) var(--so) 0 var(--shadow),0 0 0 6px rgba(255,225,74,.35)}}@media (prefers-reduced-motion:reduce){.votecta{animation:none}}
+select{font:inherit;font-weight:700;color:var(--ink);background:var(--surface);border:var(--bw) solid var(--bc);border-radius:10px;padding:6px 8px;max-width:48%}
 .tlist{display:grid;gap:8px;margin-top:10px}
 .tro{display:flex;align-items:center;gap:10px;border:var(--bw) solid var(--bc);border-radius:12px;padding:10px;opacity:.55;filter:grayscale(1);min-width:0}
 .tro.on{opacity:1;filter:none;border-color:var(--tc);background:rgba(255,255,255,.03)}
@@ -438,6 +439,7 @@ function me(){return UID?D.players[UID]:null}
 function isG(id){return String(id).indexOf('g_')===0}
 function guestList(){return (D.cur&&D.cur.guests)||[]}
 function gmap(){var g={};D.history.forEach(function(m){(m.guests||[]).forEach(function(x){g[x.id]=x})});guestList().forEach(function(x){g[x.id]=x});return g}
+function isPh(id){var p=D.players[id];return !!(p&&p.ph)}
 function P(id){return D.players[id]||(isG(id)?gmap()[id]:null)||null}
 function atOf(id){return isG(id)?((P(id)||{}).at||0):((D.rsvps[id]||{}).at||0)}
 function pname(id){var p=P(id);return p&&p.nick?p.nick:'Giocatore'}
@@ -485,7 +487,7 @@ function lastCard(){
   var l=D.last,c=D.cur;if(!l||!c||c.status==='closed'||ended(c))return '';
   var h='<div class="panel lastm"><div class="label">Partita appena giocata · '+esc(dShort(l.date))+'</div><div class="res" style="font:400 22px var(--display);text-transform:uppercase;margin:6px 0">'+esc(tn(l,'A'))+' '+(l.sa||0)+' – '+(l.sb||0)+' '+esc(tn(l,'B'))+'</div><div class="note" style="margin:0 0 8px">MVP: <b>'+esc(pname(l.mvp))+'</b></div><button class="ghost" data-a="img" data-id="'+esc(l.id)+'">Riepilogo da condividere</button><button class="ghost" data-a="tab" data-v="pagella">Vai alla Pagella</button></div>';
   return h}
-function parts(c){return c&&c.teamA?c.teamA.concat(c.teamB||[]).filter(function(id){return P(id)}):[]}
+function parts(c){return c&&c.teamA?c.teamA.concat(c.teamB||[]).filter(function(id){return P(id)&&!isPh(id)}):[]}
 function closedReg(c){return !!c&&!c.official&&c.date&&Date.now()>=dlTs(c.date)}
 function voteCta(c){
   if(!c||!ended(c))return '';var pl=parts(c);if(pl.indexOf(UID)<0)return '';
@@ -592,9 +594,17 @@ function remMsg(){
   return t+'\nRispondete su Forfait entro '+deadline(c.date)+'.';
 }
 function remHtml(){
-  var miss=allIds().filter(function(id){return !rsvpOf(id)});
+  var miss=allIds().filter(function(id){return !isPh(id)&&!rsvpOf(id)});
   return '<div class="panel"><div class="label">Promemoria per il gruppo</div><p class="note" style="margin:4px 0 8px">'+(miss.length?'Non hanno ancora risposto: '+esc(miss.map(pname).join(', '))+'.':'Hanno risposto tutti.')+' Copia il messaggio e incollalo nel gruppo.</p><textarea id="remtxt" class="rem" readonly rows="6">'+esc(remMsg())+'</textarea><button class="ghost" data-a="copy">Copia il messaggio</button></div>';
 }
+function phHtml(){
+  var L=allIds().filter(isPh),R=allIds().filter(function(id){return !isPh(id)});
+  if(!L.length)return '';
+  var h='<div class="panel"><div class="label">Giocatori da collegare</div><p class="note" style="margin:4px 0 8px">Giocatori creati a mano per le partite passate. Quando l\'amico si iscrive, scegli il suo profilo e collega: partite, gol, assist e MVP passano a lui.</p>';
+  L.forEach(function(id){
+    h+='<div class="row" style="flex-wrap:wrap"><div class="name">'+esc(pname(id))+'<small>'+np(stats()[id]?stats()[id].pl:0,'partita','partite')+'</small></div><select id="phsel_'+esc(id)+'" aria-label="Profilo di '+esc(pname(id))+'"><option value="">Scegli il profilo…</option>'+R.map(function(x){return '<option value="'+esc(x)+'">'+esc(pname(x))+'</option>'}).join('')+'</select><button class="ghost mini" data-a="phmerge" data-id="'+esc(id)+'">Collega</button></div>';
+  });
+  return h+'</div>'}
 function adminHtml(off){
   var h='<div class="panel"><div class="label">Gestione gruppo</div>';
   if(off){
@@ -602,7 +612,7 @@ function adminHtml(off){
     else h+='<button class="ghost" data-a="reopen" style="margin:8px 0 4px">Riapri la formazione</button>';
   }
   h+='<p class="note" style="margin:8px 0 2px">Forfait registrati di ogni giocatore: correggili se serve. Con "Rimuovi" un giocatore esce dal gruppo.</p>';
-  allIds().forEach(function(id){
+  allIds().filter(function(id){return !isPh(id)}).forEach(function(id){
     var f=D.players[id].forfeits||0;
     h+='<div class="row"><div class="name">'+esc(pname(id))+(id===UID?' (tu)':'')+'<small>forfait</small></div><div class="stepper"><button data-a="fg" data-id="'+esc(id)+'" data-d="-1" aria-label="Meno un forfait a '+esc(pname(id))+'">−</button><output data-fgn="'+esc(id)+'">'+f+'</output><button data-a="fg" data-id="'+esc(id)+'" data-d="1" aria-label="Più un forfait a '+esc(pname(id))+'">+</button></div>';
     if(S.rm===id)h+='<button class="ghost mini" data-a="rmyes" data-id="'+esc(id)+'">Conferma</button><button class="ghost mini" data-a="rmno">No</button>';
@@ -873,7 +883,7 @@ function vPartita(){
   var order={yes:0,maybe:1,no:2,none:3},lab={yes:'Ci sono',maybe:'Forse',no:'No',none:'In attesa'};
   function pill(id){var s=rsvpOf(id);if(s==='yes'&&Q.indexOf(id)>=0)return '<span class="pill maybe">In coda · '+(Q.indexOf(id)+1)+'°</span>';return '<span class="pill '+(s||'wait')+'">'+lab[s||'none']+'</span>'}
   if(!off){
-    var ids=allIds().concat(guestList().map(function(g){return g.id})).sort(function(a,b){return order[rsvpOf(a)||'none']-order[rsvpOf(b)||'none']||atOf(a)-atOf(b)});
+    var ids=allIds().filter(function(id){return !isPh(id)}).concat(guestList().map(function(g){return g.id})).sort(function(a,b){return order[rsvpOf(a)||'none']-order[rsvpOf(b)||'none']||atOf(a)-atOf(b)});
     h+='<div class="panel"><div class="label" style="margin-bottom:4px">Il gruppo · '+ids.length+' giocatori</div>';
     if(!ids.length)h+='<div class="empty">Nessun giocatore ancora.</div>';
     ids.forEach(function(id){h+=row(id,pill(id),aaddB(id))});
@@ -891,7 +901,7 @@ function vPartita(){
     if(!L.length)h+='<div class="empty">Nessuno è rimasto in formazione.</div>';
     L.forEach(function(id){h+=row(id,'<span class="pill yes">In formazione</span>')});
     h+='</div>';
-    var rest=allIds().concat(guestList().map(function(g){return g.id})).filter(function(id){return L.indexOf(id)<0}).sort(function(a,b){var qa=Q.indexOf(a),qb=Q.indexOf(b);if(qa>=0||qb>=0)return (qa<0?99:qa)-(qb<0?99:qb);return order[rsvpOf(a)||'none']-order[rsvpOf(b)||'none']});
+    var rest=allIds().filter(function(id){return !isPh(id)}).concat(guestList().map(function(g){return g.id})).filter(function(id){return L.indexOf(id)<0}).sort(function(a,b){var qa=Q.indexOf(a),qb=Q.indexOf(b);if(qa>=0||qb>=0)return (qa<0?99:qa)-(qb<0?99:qb);return order[rsvpOf(a)||'none']-order[rsvpOf(b)||'none']});
     if(rest.length){
       h+='<div class="panel"><div class="label" style="margin-bottom:4px">In coda e altri</div>';
       rest.forEach(function(id){
@@ -903,7 +913,7 @@ function vPartita(){
     }
   }
   if(shown<need()&&!off)h+='<div class="panel"><div class="label">Invita gli altri</div><p class="note" style="margin-top:4px">Gli amici entrano aprendo il link, accedendo con Google e creando il proprio profilo.</p></div>';
-  if(ADMIN){h+=guestHtml(off);h+=remHtml();h+=adminHtml(off)}
+  if(ADMIN){h+=guestHtml(off);h+=remHtml();h+=phHtml();h+=adminHtml(off)}
   h+=helpBlock();
   return h;
 }
@@ -962,7 +972,7 @@ function pastForm(){
   allIds().forEach(function(id){any=true;var a=p.teamA.indexOf(id)>=0,b=p.teamB.indexOf(id)>=0;
     h+='<div class="row"><div class="name">'+esc(pname(id))+'</div><div class="chips" style="flex:none"><button class="chip '+(a?'on':'')+'" data-a="pteam" data-id="'+esc(id)+'" data-v="A" aria-pressed="'+a+'">'+esc(tn(p,'A'))+'</button><button class="chip '+(b?'on':'')+'" data-a="pteam" data-id="'+esc(id)+'" data-v="B" aria-pressed="'+b+'">'+esc(tn(p,'B'))+'</button></div></div>'});
   if(!any)h+='<div class="empty">Nessun giocatore: serve che gli amici creino il profilo.</div>';
-  h+='</div><button class="primary" data-a="pgo">Avanti: punteggio e marcatori</button>';
+  h+='</div><div class="panel"><div class="label">Un amico non è ancora iscritto?</div><p class="note" style="margin:4px 0 8px">Crea un giocatore con il suo nome: comparirà nell\'elenco sopra e nelle statistiche. Quando si iscrive, lo colleghi al suo profilo da Partita › Giocatori da collegare, e tutto lo storico passa a lui.</p><label class="field" for="phname" style="margin:0 0 8px"><span class="label">Nome</span><input id="phname" maxlength="14" value="'+esc(S.phname||'')+'" autocomplete="off"></label><button class="ghost" data-a="phadd">Aggiungi giocatore</button></div><button class="primary" data-a="pgo">Avanti: punteggio e marcatori</button>';
   return h}
 function vRisultato(){
   var h=banner()+'<h2>Risultato</h2><p class="sub">Inserisci punteggio, marcatori, assist e MVP.</p>',c=D.cur,corr=null;
@@ -1413,6 +1423,18 @@ document.addEventListener('click',function(e){
   }
   else if(a==='corrno'){S.corr=null;S.past=null}
   else if(a==='pastnew'){if(!ADMIN)return;S.past={_id:'p'+Date.now().toString(36),_past:true,date:'',teamA:[],teamB:[],stage:'teams',format:'calcetto'};S.corr='__past';S.res={sa:0,sb:0,goals:{},assists:{},mvp:null,forMatch:null};window.scrollTo(0,0)}
+  else if(a==='phadd'){if(!ADMIN)return;var pn=cleanName(S.phname).slice(0,14);if(!pn){toast('Scrivi il nome');return}
+    var pid='x_'+Date.now().toString(36)+Math.floor(Math.random()*1296).toString(36);S.phname='';
+    setDoc('players/'+pid,{nick:pn,ph:true,roles:['Attacco'],foot:'Destro',color:'#8d9ac0',num:'',avc:'i',avs:'c',forfeits:0}).then(function(){toast(pn+' aggiunto')})}
+  else if(a==='phmerge'){if(!ADMIN)return;var sel=document.getElementById('phsel_'+id),to=sel&&sel.value;
+    if(!to||!P(to)||isPh(to)){toast('Scegli prima il profilo');return}
+    var nm0=pname(id),nm1=pname(to);
+    var ops=D.history.filter(function(m){return (m.teamA||[]).indexOf(id)>=0||(m.teamB||[]).indexOf(id)>=0||(m.goals||{})[id]!=null||(m.assists||{})[id]!=null||m.mvp===id}).map(function(m){
+      function rl(a){var o=[];(a||[]).forEach(function(x){x=x===id?to:x;if(o.indexOf(x)<0)o.push(x)});return o}
+      function mg(mp){var o=Object.assign({},mp||{});if(o[id]!=null){o[to]=(o[to]||0)+o[id];delete o[id]}return o}
+      var n=Object.assign({},m);delete n._id;n.teamA=rl(m.teamA);n.teamB=rl(m.teamB);n.goals=mg(m.goals);n.assists=mg(m.assists);if(n.mvp===id)n.mvp=to;
+      return setDoc('history/'+m._id,n)});
+    Promise.all(ops).then(function(){return del('players/'+id)}).then(function(){toast(nm0+' collegato a '+nm1)})}
   else if(a==='pteam'){var pp=S.past;if(!ADMIN||!pp)return;var wl=v==='A'?'teamA':'teamB',ol=v==='A'?'teamB':'teamA',ix=pp[wl].indexOf(id);pp[ol]=pp[ol].filter(function(x){return x!==id});if(ix>=0)pp[wl].splice(ix,1);else pp[wl].push(id)}
   else if(a==='pgo'){var pq=S.past;if(!ADMIN||!pq)return;var pdv=(document.getElementById('pdate')||{}).value||pq.date;if(!pdv){toast('Scegli la data');return}if(!pq.teamA.length||!pq.teamB.length){toast('Servono giocatori in entrambe le squadre');return}pq.date=pdv;pq.stage='res';window.scrollTo(0,0)}
   else if(a==='tcol'){var tk=el.dataset.t,nc=TCOLS[+v][0],ok=tk==='A'?'B':'A',oc={};if(!D.cur)return;if(tcol(D.cur,ok)===nc){toast('È già il colore dell\'altra squadra');return}oc['color'+tk]=nc;upd('matches/current',oc)}
@@ -1484,6 +1506,7 @@ document.addEventListener('click',function(e){
 });
 document.addEventListener('input',function(e){
   var el=e.target;
+  if(el.id==='phname')S.phname=el.value.slice(0,14).replace(/[<>&"]/g,'');
   if(el.id==='gname')S.gname=el.value.slice(0,14).replace(/[<>&"]/g,'');
   if(el.id==='aka'||el.id==='motto'){var v0=el.value,wd=v0.split(/\s+/).filter(Boolean).length,mx=LIM[el.id][0],pv=el.dataset.pv,lv;
     if(wd>mx)lv=(pv!==undefined&&v0.length-pv.length<=1)?pv:limField(el.id,v0);else lv=limField(el.id,v0);
