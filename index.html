@@ -80,18 +80,12 @@ button:focus-visible{outline:3px dashed var(--ink);outline-offset:3px}
 #photolb .ghost{width:auto;margin-top:8px;color:#fff;border-color:#fff}
 .avatar[data-pid] .ph{cursor:zoom-in}
 .wxw{margin:12px 0 4px;display:grid;gap:8px}
-.wxc{--wf:#fff;color:var(--wf);border:var(--bw) solid var(--bc);border-radius:16px;padding:14px;background:linear-gradient(135deg,#4b5d8a,#2a3558);text-shadow:0 1px 2px rgba(0,0,0,.25)}
-.wxc.sun{background:linear-gradient(135deg,#ffb347,#ff7e3d)}.wxc.part{background:linear-gradient(135deg,#5aa9ff,#7d8bff)}.wxc.night{background:linear-gradient(135deg,#1b2a5c,#4a3c8f)}
-.wxc.cloud{background:linear-gradient(135deg,#7b8aa8,#4b5875)}.wxc.rain{background:linear-gradient(135deg,#4d7fb5,#2b4468)}.wxc.storm{background:linear-gradient(135deg,#5b4a8a,#232a4d)}
-.wxc.snow{background:linear-gradient(135deg,#9fc4e8,#6f8fb8)}.wxc.fog{background:linear-gradient(135deg,#9aa3b2,#6c7584)}
-.wxt{display:flex;align-items:center;gap:12px}.wxi{font-size:46px;line-height:1}
-.wxn{flex:1;min-width:0}.wxn b{display:block;font:400 44px/1 var(--display)}.wxn span{font-weight:800;font-size:15px}
-.wxp{display:grid;gap:4px;font-weight:800;font-size:13px;text-align:right}
-.wxs2{margin:8px 0 10px;font-size:11px;font-weight:700;opacity:.85;text-transform:uppercase;letter-spacing:.05em}
-.wxhs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-.wxh{text-align:center;border-radius:12px;padding:6px 2px;background:rgba(255,255,255,.14)}.wxh.on{background:rgba(255,255,255,.34);box-shadow:inset 0 0 0 2px rgba(255,255,255,.7)}
-.wxh small{display:block;font-size:10px;font-weight:700;opacity:.9}.wxh span{display:block;font-size:20px;line-height:1.3}.wxh b{font-size:14px}
-.wxs{font-weight:700;font-size:13px;opacity:.9}
+.wxc{display:flex;align-items:center;gap:10px;border:var(--bw) solid var(--bc);border-radius:14px;padding:8px 12px;background:var(--surface);color:var(--ink);font-weight:800;font-size:14px}
+.wxt{display:flex;align-items:center;gap:10px;width:100%}.wxi{font-size:22px;line-height:1}
+.wxn{flex:1;min-width:0;display:flex;align-items:baseline;gap:8px}.wxn b{font:400 22px/1 var(--display)}.wxn span{font-size:14px;color:var(--muted)}
+.wxp{display:flex;gap:10px;font-size:12px;color:var(--muted)}
+.wxs2,.wxhs{display:none}
+.wxs{font-weight:700;font-size:13px;color:var(--muted)}
 .mapc{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--ink);background:var(--surface);border:var(--bw) solid var(--bc);border-radius:16px;padding:10px 12px;box-shadow:var(--so) var(--so) 0 var(--shadow)}
 .mapc:active{transform:translate(2px,2px);box-shadow:none}
 .mapi{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--pink);color:var(--on-acc);border:var(--bw) solid var(--bc)}
@@ -1316,7 +1310,7 @@ function playerCard(id){
   var o=document.createElement('div');o.id='photolb';o.setAttribute('role','dialog');o.setAttribute('aria-label','Scheda di '+pname(id));
   var h='<div class="lbc">'+avHtml(id,p,0).replace(/ data-pid="[^"]*"/,'')+'<b>'+esc(pname(id))+'</b>'+(p.aka?'<span>“'+esc(p.aka)+'”</span>':'')+(p.motto?'<small>“'+esc(p.motto)+'”</small>':'');
   h+='<div class="pcs"><div class="pcl">'+esc(rl.map(function(x,i){return i?x+' (secondario)':x+' (principale)'}).join(' · '))+(p.num!==''&&p.num!=null?' · maglia '+esc(p.num):'')+(p.foot?' · piede '+esc(p.foot.toLowerCase()):'')+'</div>';
-  h+='<div class="pcg">'+box(L.pl,'partite')+box(L.w,'vittorie')+box(L.g,'gol')+box(L.a,'assist')+box(L.mvp,'MVP')+box(L.cs,'porta inviolata')+(L.og?box(L.og,'autogol'):'')+(ph?'':'<div class="pcb"><b>'+dots(lv.v)+'</b><small>livello '+lv.v.toFixed(1)+'</small></div>')+(ph?'':box(p.forfeits||0,'forfait'))+'</div>';
+  h+='<div class="pcg">'+box(L.pl,'partite')+box(L.w,'vittorie')+box(L.g,'gol')+box(L.a,'assist')+box(L.mvp,'MVP')+box(L.cs,'porta inviolata')+(L.og?box(L.og,'autogol'):'')+(ph?'':'<div class="pcb"><b>'+dots(lv.v)+'</b><small>livello</small></div>')+(ph?'':box(p.forfeits||0,'forfait'))+'</div>';
   if(form.length)h+='<div class="pcf"><small>Ultime partite</small>'+form.map(function(x){return '<i class="f'+x+'">'+x+'</i>'}).join('')+'</div>';
   if(tr.length)h+='<div class="pct"><small>Trofei</small>'+tr.map(function(t){return '<span title="'+esc(t.name+' · '+TIERS[t.lv-1][0])+'" style="border-color:'+TIERS[t.lv-1][1]+'">'+t.ico+'</span>'}).join('')+'</div>';
   h+='</div><button class="ghost mini">Chiudi</button></div>';
