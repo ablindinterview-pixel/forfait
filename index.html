@@ -1027,15 +1027,23 @@ function vRisultato(){
   if(S.res.forMatch!==c.id)S.res={sa:0,sb:0,goals:{},assists:{},mvp:null,forMatch:c.id};
   var MV=corr?{t:{},n:0}:mvpVotes(),LD=corr?null:mvpLeader(MV.t);
   if(!S.res.mvp&&LD)S.res.mvp=LD;
-  var r=S.res,A=c.teamA.filter(function(id){return P(id)}),B=(c.teamB||[]).filter(function(id){return P(id)});
+  var r=S.res,A=c.teamA.filter(function(id){return P(id)}),B=(c.teamB||[]).filter(function(id){return P(id)});r._A=A.slice();r._B=B.slice();r.og=r.og||{};
   h+='<div class="panel"><div class="score"><div><div class="tn" style="--c:'+tcol(c,'A')+';--cf:'+tcf(tcol(c,'A'))+'">'+esc(tn(c,'A'))+'</div><div class="big" data-big="sa">'+r.sa+'</div><div class="stepper"><button data-a="sc" data-t="sa" data-d="-1" aria-label="Meno un gol '+esc(tn(c,'A'))+'">−</button><button data-a="sc" data-t="sa" data-d="1" aria-label="Più un gol '+esc(tn(c,'A'))+'">+</button></div></div><div class="label">vs</div><div><div class="tn" style="--c:'+tcol(c,'B')+';--cf:'+tcf(tcol(c,'B'))+'">'+esc(tn(c,'B'))+'</div><div class="big" data-big="sb">'+r.sb+'</div><div class="stepper"><button data-a="sc" data-t="sb" data-d="-1" aria-label="Meno un gol '+esc(tn(c,'B'))+'">−</button><button data-a="sc" data-t="sb" data-d="1" aria-label="Più un gol '+esc(tn(c,'B'))+'">+</button></div></div></div></div>';
-  h+='<div class="tabs2" style="margin-top:4px">'+[['gol','Marcatori'],['assist','Assist']].map(function(o){return '<button class="chip '+((S.rt||'gol')===o[0]?'on':'')+'" data-a="rtab" data-v="'+o[0]+'">'+o[1]+'</button>'}).join('')+'</div>';
-  if(S.rt!=='assist'){
-  var tot=0;Object.keys(r.goals).forEach(function(k){tot+=r.goals[k]});
-  h+='<div class="panel"><div class="label">Marcatori · '+tot+' su '+(r.sa+r.sb)+' gol assegnati</div>';
+  h+='<div class="tabs2" style="margin-top:4px">'+[['gol','Marcatori'],['assist','Assist'],['og','Autogol']].map(function(o){return '<button class="chip '+((S.rt||'gol')===o[0]?'on':'')+'" data-a="rtab" data-v="'+o[0]+'">'+o[1]+'</button>'}).join('')+'</div>';
+  if(S.rt!=='assist'&&S.rt!=='og'){
+  var tot=0,tog=0;Object.keys(r.goals).forEach(function(k){tot+=r.goals[k]});Object.keys(r.og).forEach(function(k){tog+=r.og[k]});
+  h+='<div class="panel"><div class="label">Marcatori · '+(tot+tog)+' su '+(r.sa+r.sb)+' gol assegnati'+(tog?' (di cui '+tog+' autogol)':'')+'</div><p class="note" style="margin:4px 0 6px">Ogni gol aggiunto a un giocatore sale anche nel punteggio della sua squadra.</p>';
   A.concat(B).forEach(function(id){
     var g=r.goals[id]||0,inA=A.indexOf(id)>=0;
     h+='<div class="row"><span style="width:14px;height:14px;border-radius:50%;border:var(--bw) solid var(--bc);flex:none;background:var('+(inA?'--blue':'--pink')+')"></span><div class="name">'+esc(pname(id))+'</div><div class="stepper"><button data-a="goal" data-id="'+esc(id)+'" data-d="-1" aria-label="Meno gol '+esc(pname(id))+'">−</button><output data-gout="'+esc(id)+'">'+g+'</output><button data-a="goal" data-id="'+esc(id)+'" data-d="1" aria-label="Più gol '+esc(pname(id))+'">+</button></div></div>';
+  });
+  h+='</div>';
+  }else if(S.rt==='og'){
+  var tg2=0;Object.keys(r.og).forEach(function(k){tg2+=r.og[k]});
+  h+='<div class="panel"><div class="label">Autogol · '+tg2+'</div><p class="note" style="margin:4px 0 6px">Un autogol fa salire il punteggio della squadra avversaria e non conta come gol del giocatore.</p>';
+  A.concat(B).forEach(function(id){
+    var g=r.og[id]||0,inA=A.indexOf(id)>=0;
+    h+='<div class="row"><span style="width:14px;height:14px;border-radius:50%;border:var(--bw) solid var(--bc);flex:none;background:var('+(inA?'--blue':'--pink')+')"></span><div class="name">'+esc(pname(id))+'</div><div class="stepper"><button data-a="og" data-id="'+esc(id)+'" data-d="-1" aria-label="Meno autogol '+esc(pname(id))+'">−</button><output data-oout="'+esc(id)+'">'+g+'</output><button data-a="og" data-id="'+esc(id)+'" data-d="1" aria-label="Più autogol '+esc(pname(id))+'">+</button></div></div>';
   });
   h+='</div>';
   }else{
@@ -1056,12 +1064,13 @@ function vRisultato(){
 
 /* formazione tipo e record, dalla storia delle partite */
 function playerLog(){
-  var L={};allIds().forEach(function(id){if(!isG(id))L[id]={pl:0,g:0,a:0,mvp:0,w:0,cs:0}});
+  var L={};allIds().forEach(function(id){if(!isG(id))L[id]={pl:0,g:0,a:0,mvp:0,w:0,cs:0,og:0}});
   D.history.forEach(function(m){
     var sa=m.sa||0,sb=m.sb||0;
     [[m.teamA||[],sa,sb],[m.teamB||[],sb,sa]].forEach(function(t){t[0].forEach(function(id){var l=L[id];if(!l)return;l.pl++;if(t[1]>t[2])l.w++;if(t[2]===0)l.cs++})});
     Object.keys(m.goals||{}).forEach(function(id){if(L[id])L[id].g+=m.goals[id]});
     Object.keys(m.assists||{}).forEach(function(id){if(L[id])L[id].a+=m.assists[id]});
+    Object.keys(m.og||{}).forEach(function(id){if(L[id])L[id].og+=m.og[id]});
     if(m.mvp&&L[m.mvp])L[m.mvp].mvp++;
   });
   return L;
@@ -1154,7 +1163,7 @@ function vPagella(){
       h+='<div class="hist"><div data-a="hist" data-id="'+esc(m._id)+'" role="button" tabindex="0" style="cursor:pointer"><div class="label">'+esc(dShort(m.date))+' · '+(m.format==='calciotto'?'calciotto · ':'')+(op?'chiudi':'dettagli')+'</div><div class="res">'+esc(tn(m,'A'))+' '+(m.sa||0)+' – '+(m.sb||0)+' '+esc(tn(m,'B'))+'</div><div style="color:var(--muted)">MVP '+esc(pname(m.mvp))+'</div></div>';
       if(op){
         var gl=Object.keys(m.goals||{}).filter(function(k){return m.goals[k]>0}).sort(function(a,b){return m.goals[b]-m.goals[a]}).map(function(k){return esc(pname(k))+' '+m.goals[k]}).join(', ');
-        h+='<div class="hdet"><p class="note"><b>'+esc(tn(m,'A'))+':</b> '+esc((m.teamA||[]).map(pname).join(', ')||'—')+'</p><p class="note"><b>'+esc(tn(m,'B'))+':</b> '+esc((m.teamB||[]).map(pname).join(', ')||'—')+'</p><p class="note"><b>Marcatori:</b> '+(gl||'—')+'</p><p class="note"><b>Assist:</b> '+(Object.keys(m.assists||{}).filter(function(k){return m.assists[k]>0}).sort(function(a,b){return m.assists[b]-m.assists[a]}).map(function(k){return esc(pname(k))+' '+m.assists[k]}).join(', ')||'—')+'</p><button class="ghost" data-a="img" data-id="'+esc(m._id)+'">Crea il riepilogo da condividere</button>'+(ADMIN?'<button class="ghost" data-a="editres" data-id="'+esc(m._id)+'">Correggi il risultato</button>':'')+'</div>';
+        h+='<div class="hdet"><p class="note"><b>'+esc(tn(m,'A'))+':</b> '+esc((m.teamA||[]).map(pname).join(', ')||'—')+'</p><p class="note"><b>'+esc(tn(m,'B'))+':</b> '+esc((m.teamB||[]).map(pname).join(', ')||'—')+'</p><p class="note"><b>Marcatori:</b> '+(gl||'—')+'</p><p class="note"><b>Assist:</b> '+(Object.keys(m.assists||{}).filter(function(k){return m.assists[k]>0}).sort(function(a,b){return m.assists[b]-m.assists[a]}).map(function(k){return esc(pname(k))+' '+m.assists[k]}).join(', ')||'—')+'</p>'+(m.og&&Object.keys(m.og).some(function(k){return m.og[k]>0})?'<p class="note"><b>Autogol:</b> '+Object.keys(m.og).filter(function(k){return m.og[k]>0}).map(function(k){return esc(pname(k))+' '+m.og[k]}).join(', ')+'</p>':'')+'<button class="ghost" data-a="img" data-id="'+esc(m._id)+'">Crea il riepilogo da condividere</button>'+(ADMIN?'<button class="ghost" data-a="editres" data-id="'+esc(m._id)+'">Correggi il risultato</button>':'')+'</div>';
       }
       h+='</div>';
     });
@@ -1298,7 +1307,7 @@ function changed(){S.ready=true;var a=document.activeElement;if(a&&a.tagName==='
 /* azioni */
 function playerCard(id){
   var p=P(id);if(!p||isG(id))return false;
-  var L=playerLog()[id]||{pl:0,g:0,a:0,mvp:0,w:0,cs:0},ph=isPh(id);
+  var L=playerLog()[id]||{pl:0,g:0,a:0,mvp:0,w:0,cs:0,og:0},ph=isPh(id);
   var form=[];D.history.forEach(function(m){var a=(m.teamA||[]).indexOf(id)>=0,b=(m.teamB||[]).indexOf(id)>=0;if(!a&&!b)return;var my=a?(m.sa||0):(m.sb||0),op=a?(m.sb||0):(m.sa||0);form.push(my>op?'V':my<op?'P':'N')});
   form=form.slice(0,5);
   var tr=trophyData(id).filter(function(t){return t.lv>0}).sort(function(x,y){return y.lv-x.lv}).slice(0,8);
@@ -1307,7 +1316,7 @@ function playerCard(id){
   var o=document.createElement('div');o.id='photolb';o.setAttribute('role','dialog');o.setAttribute('aria-label','Scheda di '+pname(id));
   var h='<div class="lbc">'+avHtml(id,p,0).replace(/ data-pid="[^"]*"/,'')+'<b>'+esc(pname(id))+'</b>'+(p.aka?'<span>“'+esc(p.aka)+'”</span>':'')+(p.motto?'<small>“'+esc(p.motto)+'”</small>':'');
   h+='<div class="pcs"><div class="pcl">'+esc(rl.map(function(x,i){return i?x+' (secondario)':x+' (principale)'}).join(' · '))+(p.num!==''&&p.num!=null?' · maglia '+esc(p.num):'')+(p.foot?' · piede '+esc(p.foot.toLowerCase()):'')+'</div>';
-  h+='<div class="pcg">'+box(L.pl,'partite')+box(L.w,'vittorie')+box(L.g,'gol')+box(L.a,'assist')+box(L.mvp,'MVP')+box(L.cs,'porta inviolata')+(ph?'':box(lv.v.toFixed(1),'livello'))+(ph?'':box(p.forfeits||0,'forfait'))+'</div>';
+  h+='<div class="pcg">'+box(L.pl,'partite')+box(L.w,'vittorie')+box(L.g,'gol')+box(L.a,'assist')+box(L.mvp,'MVP')+box(L.cs,'porta inviolata')+(L.og?box(L.og,'autogol'):'')+(ph?'':'<div class="pcb"><b>'+dots(lv.v)+'</b><small>livello '+lv.v.toFixed(1)+'</small></div>')+(ph?'':box(p.forfeits||0,'forfait'))+'</div>';
   if(form.length)h+='<div class="pcf"><small>Ultime partite</small>'+form.map(function(x){return '<i class="f'+x+'">'+x+'</i>'}).join('')+'</div>';
   if(tr.length)h+='<div class="pct"><small>Trofei</small>'+tr.map(function(t){return '<span title="'+esc(t.name+' · '+TIERS[t.lv-1][0])+'" style="border-color:'+TIERS[t.lv-1][1]+'">'+t.ico+'</span>'}).join('')+'</div>';
   h+='</div><button class="ghost mini">Chiudi</button></div>';
@@ -1374,6 +1383,7 @@ function saveRes(){
   if(!r.mvp){toast('Scegli l\'MVP');return}
   if(r.sa+r.sb===0){toast('Inserisci il punteggio');return}
   var rec={date:c.date||'',nameA:tn(c,'A'),nameB:tn(c,'B'),colorA:tcol(c,'A'),colorB:tcol(c,'B'),sa:r.sa,sb:r.sb,teamA:c.teamA,teamB:c.teamB||[],goals:r.goals,assists:r.assists||{},mvp:r.mvp,by:UID};
+  var ogs={};Object.keys(r.og||{}).forEach(function(k){if(r.og[k]>0)ogs[k]=r.og[k]});if(Object.keys(ogs).length)rec.og=ogs;
   if(c.format)rec.format=c.format;
   rec.guests=cm?(cm.guests||[]):c.teamA.concat(c.teamB||[]).filter(isG).map(function(id){var g=P(id)||{};return {id:id,nick:g.nick,roles:g.roles,lv:g.lv}});
   fxOn({ok:function(){return S.tab==='pagella'},run:function(){
@@ -1438,8 +1448,9 @@ document.addEventListener('click',function(e){
   else if(a==='rating'){S.rating=!S.rating;if(S.rating)fxOn({run:function(){var b=$1('[data-a="rating"]');if(b&&b.nextElementSibling){reveal(b.nextElementSibling);cascade(qa('.rate button'),12,8)}}})}
   else if(a==='vote'){vote(id,+v)}
   else if(a==='sc'){var tt=el.dataset.t;S.res[tt]=Math.max(0,S.res[tt]+d);fxOn({run:function(){var b=$1('[data-big="'+tt+'"]');pop(b,d>0?1.6:.7);flash(b,tok(d>0?'--green':'--pink'))}})}
-  else if(a==='goal'){S.res.goals[id]=Math.max(0,(S.res.goals[id]||0)+d);fxOn({run:function(){var b=$1('[data-gout="'+id+'"]');pop(b,d>0?1.7:.75);flash(b&&b.closest('.row'),tok(d>0?'--green':'--pink'))}})}
-  else if(a==='rtab'){S.rt=v==='assist'?'assist':'gol';fxOn({run:function(){var p=qa('#screen .panel')[1];if(p){reveal(p);cascade(p.querySelectorAll('.row'),35,8)}}})}
+  else if(a==='goal'){var g0=S.res.goals[id]||0,g1=Math.max(0,g0+d),ch=g1-g0,tk=(S.res._A||[]).indexOf(id)>=0?'sa':(S.res._B||[]).indexOf(id)>=0?'sb':null;S.res.goals[id]=g1;if(ch&&tk)S.res[tk]=Math.max(0,S.res[tk]+ch);fxOn({run:function(){var b=$1('[data-gout="'+id+'"]');pop(b,d>0?1.7:.75);flash(b&&b.closest('.row'),tok(d>0?'--green':'--pink'))}})}
+  else if(a==='og'){var og=S.res.og||(S.res.og={}),o0=og[id]||0,o1=Math.max(0,o0+d),ch2=o1-o0,tk2=(S.res._A||[]).indexOf(id)>=0?'sb':(S.res._B||[]).indexOf(id)>=0?'sa':null;og[id]=o1;if(ch2&&tk2)S.res[tk2]=Math.max(0,S.res[tk2]+ch2);fxOn({run:function(){var b=$1('[data-oout="'+id+'"]');pop(b,d>0?1.7:.75);flash(b&&b.closest('.row'),tok(d>0?'--green':'--pink'))}})}
+  else if(a==='rtab'){S.rt=v==='assist'?'assist':v==='og'?'og':'gol';fxOn({run:function(){var p=qa('#screen .panel')[1];if(p){reveal(p);cascade(p.querySelectorAll('.row'),35,8)}}})}
   else if(a==='ast'){
     var as0=S.res.assists||(S.res.assists={}),tt0=0;Object.keys(as0).forEach(function(k){tt0+=as0[k]});
     if(d>0&&tt0>=S.res.sa+S.res.sb){toast('Gli assist non possono superare i gol');render();return}
@@ -1502,7 +1513,7 @@ document.addEventListener('click',function(e){
     if(!ADMIN)return;
     var em=D.history.filter(function(x){return x._id===id})[0];
     if(!em){toast('Partita non trovata');return}
-    S.res={sa:em.sa||0,sb:em.sb||0,goals:JSON.parse(JSON.stringify(em.goals||{})),assists:JSON.parse(JSON.stringify(em.assists||{})),mvp:em.mvp||null,forMatch:em._id};
+    S.res={sa:em.sa||0,sb:em.sb||0,goals:JSON.parse(JSON.stringify(em.goals||{})),assists:JSON.parse(JSON.stringify(em.assists||{})),og:JSON.parse(JSON.stringify(em.og||{})),mvp:em.mvp||null,forMatch:em._id};
     S.corr=em._id;S.tab='risultato';window.scrollTo(0,0);
   }
   else if(a==='corrno'){S.corr=null;S.past=null}
@@ -1513,10 +1524,10 @@ document.addEventListener('click',function(e){
   else if(a==='phmerge'){if(!ADMIN)return;var sel=document.getElementById('phsel_'+id),to=sel&&sel.value;
     if(!to||!P(to)||isPh(to)){toast('Scegli prima il profilo');return}
     var nm0=pname(id),nm1=pname(to);
-    var ops=D.history.filter(function(m){return (m.teamA||[]).indexOf(id)>=0||(m.teamB||[]).indexOf(id)>=0||(m.goals||{})[id]!=null||(m.assists||{})[id]!=null||m.mvp===id}).map(function(m){
+    var ops=D.history.filter(function(m){return (m.teamA||[]).indexOf(id)>=0||(m.teamB||[]).indexOf(id)>=0||(m.goals||{})[id]!=null||(m.assists||{})[id]!=null||(m.og||{})[id]!=null||m.mvp===id}).map(function(m){
       function rl(a){var o=[];(a||[]).forEach(function(x){x=x===id?to:x;if(o.indexOf(x)<0)o.push(x)});return o}
       function mg(mp){var o=Object.assign({},mp||{});if(o[id]!=null){o[to]=(o[to]||0)+o[id];delete o[id]}return o}
-      var n=Object.assign({},m);delete n._id;n.teamA=rl(m.teamA);n.teamB=rl(m.teamB);n.goals=mg(m.goals);n.assists=mg(m.assists);if(n.mvp===id)n.mvp=to;
+      var n=Object.assign({},m);delete n._id;n.teamA=rl(m.teamA);n.teamB=rl(m.teamB);n.goals=mg(m.goals);n.assists=mg(m.assists);if(m.og)n.og=mg(m.og);if(n.mvp===id)n.mvp=to;
       return setDoc('history/'+m._id,n)});
     Promise.all(ops).then(function(){return del('players/'+id)}).then(function(){toast(nm0+' collegato a '+nm1)})}
   else if(a==='acc'){S.acc=S.acc||{};S.acc[v]=!S.acc[v]}
