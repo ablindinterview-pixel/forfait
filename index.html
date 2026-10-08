@@ -1396,21 +1396,21 @@ function wxCls(c,h){var n=h>=20||h<6;if(c===0||c===1)return n?'night':'sun';if(c
 function mapCard(c){var mu=mapsUrl(c);if(!mu)return '';return '<a class="mapc" href="'+esc(mu)+'" target="_blank" rel="noopener"><span class="mapi">'+PIN+'</span><span class="mapt"><b>'+esc(c.field||c.city)+'</b><small>'+esc(c.field&&c.city?c.city+' · ':'')+'Apri le indicazioni</small></span><span class="mapg">›</span></a>'}
 function wxHtml(c){
   if(!c||!c.date||(!c.city&&!c.field))return '';
-  var days=(new Date(c.date+'T12:00:00')-Date.now())/86400000,key=c.city?c.city+'|'+c.date+'|'+(c.time||''):'',ok=c.city&&days>-0.6&&days<15,body='',cls='';
+  var days=(new Date(c.date+'T12:00:00')-Date.now())/86400000,key=(c.city||c.field)?(c.city||c.field)+'|'+c.date+'|'+(c.time||''):'',ok=(c.city||c.field)&&days>-0.6&&days<15,body='',cls='';
   if(ok){var f=WX.fc[key];if(f&&f.html){body=f.html;cls=f.cls||''}else body='<div class="wxs">Meteo in caricamento…</div>';if(!f||Date.now()-f.t>1800000)wxLoad(c,key)}
-  else if(c.city&&days>=15)body='<div class="wxs">Le previsioni compaiono 15 giorni prima della partita.</div>';
+  else if((c.city||c.field)&&days>=15)body='<div class="wxs">Le previsioni compaiono 15 giorni prima della partita.</div>';
   return '<div class="wxw" id="wx" data-k="'+esc(key)+'">'+(body?'<div class="wxc '+cls+'">'+body+'</div>':'')+mapCard(c)+'</div>'}
 function wxLoad(c,key){
   WX.fc[key]=Object.assign(WX.fc[key]||{},{t:Date.now()});
   var put=function(html,cls){WX.fc[key]={t:Date.now(),html:html,cls:cls||''};var e=document.getElementById('wx');if(e&&e.dataset.k===key){var b=e.querySelector('.wxc');if(!b){b=document.createElement('div');e.insertBefore(b,e.firstChild)}b.className='wxc '+(cls||'');b.innerHTML=html}};
-  var geo=WX.geo[c.city]?Promise.resolve(WX.geo[c.city]):fetch('https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(c.city)+'&count=1&language=it&format=json').then(function(r){return r.json()}).then(function(j){var g=j.results&&j.results[0];if(!g)throw 0;WX.geo[c.city]={lat:g.latitude,lon:g.longitude};return WX.geo[c.city]});
+  var pl=c.city||c.field;var geo=WX.geo[pl]?Promise.resolve(WX.geo[pl]):fetch('https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(pl)+'&count=1&language=it&format=json').then(function(r){return r.json()}).then(function(j){var g=j.results&&j.results[0];if(!g)throw 0;WX.geo[pl]={lat:g.latitude,lon:g.longitude};return WX.geo[pl]});
   geo.then(function(g){return fetch('https://api.open-meteo.com/v1/forecast?latitude='+g.lat+'&longitude='+g.lon+'&hourly=temperature_2m,precipitation_probability,weathercode,windspeed_10m&timezone=auto&start_date='+c.date+'&end_date='+c.date)}).then(function(r){return r.json()}).then(function(j){
     var hh=/^\d\d:\d\d$/.test(c.time||'')?+c.time.slice(0,2):21,H=j.hourly,i=H.time.indexOf(c.date+'T'+('0'+hh).slice(-2)+':00');if(i<0)throw 0;
     var d=wxDesc(H.weathercode[i],hh),pp=H.precipitation_probability[i],cls=wxCls(H.weathercode[i],hh);
     var strip='';for(var k=Math.max(0,i-2);k<=Math.min(23,i+2);k++){var hx=+H.time[k].slice(11,13);strip+='<div class="wxh'+(k===i?' on':'')+'"><small>'+('0'+hx).slice(-2)+':00</small><span>'+wxDesc(H.weathercode[k],hx)[0]+'</span><b>'+Math.round(H.temperature_2m[k])+'°</b></div>'}
     var html='<div class="wxt"><span class="wxi">'+d[0]+'</span><div class="wxn"><b>'+Math.round(H.temperature_2m[i])+'°</b><span>'+d[1]+'</span></div><div class="wxp"><span>💧 '+(pp==null?'—':pp+'%')+'</span><span>💨 '+Math.round(H.windspeed_10m[i])+' km/h</span></div></div><div class="wxs2">Previsione per le '+('0'+hh).slice(-2)+':00 · Open-Meteo</div><div class="wxhs">'+strip+'</div>';
     put(html,cls)
-  }).catch(function(){put('<div class="wxs">Meteo non disponibile ora.</div>')})}
+  }).catch(function(){put('<div class="wxs">Meteo non disponibile: '+(c.city?'riprova tra poco.':'scrivi la città del campo (es. Bologna) nella gestione partita.')+'</div>')})}
 function nextMatchDoc(c){var d=new Date((c.date||nextTuesday())+'T12:00:00');d.setDate(d.getDate()+7);
   return setDoc('matches/current',{id:'m'+Date.now().toString(36),date:isoOf(d),time:c.time||'',field:c.field||'',city:c.city||'',status:'open'})}
 function newMatch(){
