@@ -954,10 +954,22 @@ function vSquadre(){
   return h;
 }
 
+function pastForm(){
+  var p=S.past,h='<div class="banner">Stai inserendo una partita già giocata. Il risultato entra nelle statistiche e nella Pagella.</div><button class="ghost" data-a="corrno" style="margin:0 0 12px">Annulla</button>';
+  h+='<div class="panel"><label class="field" for="pdate" style="margin:0"><span class="label">Data della partita</span><input id="pdate" type="date" value="'+esc(p.date||'')+'"></label></div>';
+  h+='<div class="panel"><div class="label">Chi ha giocato · '+p.teamA.length+' '+esc(tn(p,'A'))+' · '+p.teamB.length+' '+esc(tn(p,'B'))+'</div><p class="note" style="margin:4px 0 6px">Per ogni giocatore scegli la squadra. Tocca di nuovo per toglierlo.</p>';
+  var any=false;
+  allIds().forEach(function(id){any=true;var a=p.teamA.indexOf(id)>=0,b=p.teamB.indexOf(id)>=0;
+    h+='<div class="row"><div class="name">'+esc(pname(id))+'</div><div class="chips" style="flex:none"><button class="chip '+(a?'on':'')+'" data-a="pteam" data-id="'+esc(id)+'" data-v="A" aria-pressed="'+a+'">'+esc(tn(p,'A'))+'</button><button class="chip '+(b?'on':'')+'" data-a="pteam" data-id="'+esc(id)+'" data-v="B" aria-pressed="'+b+'">'+esc(tn(p,'B'))+'</button></div></div>'});
+  if(!any)h+='<div class="empty">Nessun giocatore: serve che gli amici creino il profilo.</div>';
+  h+='</div><button class="primary" data-a="pgo">Avanti: punteggio e marcatori</button>';
+  return h}
 function vRisultato(){
   var h=banner()+'<h2>Risultato</h2><p class="sub">Inserisci punteggio, marcatori, assist e MVP.</p>',c=D.cur,corr=null;
-  if(S.corr){corr=D.history.filter(function(x){return x._id===S.corr})[0]||null;if(!corr)S.corr=null}
-  if(corr){c={id:corr._id,date:corr.date,teamA:corr.teamA||[],teamB:corr.teamB||[],nameA:corr.nameA,nameB:corr.nameB,colorA:corr.colorA,colorB:corr.colorB,format:corr.format,status:'open'};h+='<div class="banner">Stai correggendo la partita del '+esc(dShort(corr.date))+'. Il risultato nuovo sostituisce quello salvato.</div><button class="ghost" data-a="corrno" style="margin:0 0 12px">Annulla la correzione</button>'}
+  if(S.corr==='__past'&&S.past){if(S.past.stage!=='res')return h+pastForm();corr=S.past}
+  else if(S.corr){corr=D.history.filter(function(x){return x._id===S.corr})[0]||null;if(!corr)S.corr=null}
+  if(corr){c={id:corr._id,date:corr.date,teamA:corr.teamA||[],teamB:corr.teamB||[],nameA:corr.nameA,nameB:corr.nameB,colorA:corr.colorA,colorB:corr.colorB,format:corr.format,status:'open'};h+='<div class="banner">'+(corr._past?'Stai inserendo la partita del '+esc(dShort(corr.date))+'.':'Stai correggendo la partita del '+esc(dShort(corr.date))+'. Il risultato nuovo sostituisce quello salvato.')+'</div><button class="ghost" data-a="corrno" style="margin:0 0 12px">'+(corr._past?'Annulla':'Annulla la correzione')+'</button>'}
+  if(ADMIN&&!S.corr)h+='<button class="ghost" data-a="pastnew" style="margin:0 0 12px">Inserisci una partita passata</button>';
   if(!c)return h+'<div class="panel empty">Nessuna partita da registrare.</div>';
   if(c.status==='closed')return h+'<div class="panel empty">Risultato già salvato: '+esc(tn(c,'A'))+' '+(c.sa||0)+' – '+(c.sb||0)+' '+esc(tn(c,'B'))+'. Convoca la prossima dalla scheda Partita.</div>'+(ADMIN?'<button class="ghost" data-a="editres" data-id="'+esc(c.id)+'">Correggi il risultato</button>':'');
   if(!corr&&!teamsReady())return h+'<div class="panel empty">Servono prima le squadre.'+(ADMIN?' Creale dalla scheda Squadre.':'')+'</div>';
@@ -1287,7 +1299,7 @@ function vote(id,v){
 }
 function saveRes(){
   if(!ADMIN){toast('Solo l\'admin può farlo');return}
-  var r=S.res,c=D.cur,cm=S.corr?D.history.filter(function(x){return x._id===S.corr})[0]:null;
+  var r=S.res,c=D.cur,cm=S.corr==='__past'?S.past:S.corr?D.history.filter(function(x){return x._id===S.corr})[0]:null;
   if(cm)c={id:cm._id,date:cm.date,teamA:cm.teamA||[],teamB:cm.teamB||[],nameA:cm.nameA,nameB:cm.nameB,colorA:cm.colorA,colorB:cm.colorB,format:cm.format};
   if(!r.mvp){toast('Scegli l\'MVP');return}
   if(r.sa+r.sb===0){toast('Inserisci il punteggio');return}
@@ -1303,7 +1315,7 @@ function saveRes(){
     if(cm){var ps=[];if(D.cur&&cm._id===D.cur.id)ps.push(upd('matches/current',Object.assign({status:'closed'},f)));if(D.last&&D.last.id===cm._id)ps.push(upd('matches/last',f));return Promise.all(ps)}
     var lr=Object.assign({},D.cur,f,{status:'closed'});
     return setDoc('matches/last',lr).then(function(){return nextMatchDoc(D.cur)})
-  }).then(function(){S.corr=null;S.tab='pagella';S.sub='marcatori';toast('Risultato salvato');render()});
+  }).then(function(){S.corr=null;S.past=null;S.tab='pagella';S.sub='marcatori';toast('Risultato salvato');render()});
 }
 function nextMatchDoc(c){var d=new Date((c.date||nextTuesday())+'T12:00:00');d.setDate(d.getDate()+7);
   return setDoc('matches/current',{id:'m'+Date.now().toString(36),date:isoOf(d),time:c.time||'',field:c.field||'',status:'open'})}
@@ -1399,7 +1411,10 @@ document.addEventListener('click',function(e){
     S.res={sa:em.sa||0,sb:em.sb||0,goals:JSON.parse(JSON.stringify(em.goals||{})),assists:JSON.parse(JSON.stringify(em.assists||{})),mvp:em.mvp||null,forMatch:em._id};
     S.corr=em._id;S.tab='risultato';window.scrollTo(0,0);
   }
-  else if(a==='corrno'){S.corr=null}
+  else if(a==='corrno'){S.corr=null;S.past=null}
+  else if(a==='pastnew'){if(!ADMIN)return;S.past={_id:'p'+Date.now().toString(36),_past:true,date:'',teamA:[],teamB:[],stage:'teams',format:'calcetto'};S.corr='__past';S.res={sa:0,sb:0,goals:{},assists:{},mvp:null,forMatch:null};window.scrollTo(0,0)}
+  else if(a==='pteam'){var pp=S.past;if(!ADMIN||!pp)return;var wl=v==='A'?'teamA':'teamB',ol=v==='A'?'teamB':'teamA',ix=pp[wl].indexOf(id);pp[ol]=pp[ol].filter(function(x){return x!==id});if(ix>=0)pp[wl].splice(ix,1);else pp[wl].push(id)}
+  else if(a==='pgo'){var pq=S.past;if(!ADMIN||!pq)return;var pdv=(document.getElementById('pdate')||{}).value||pq.date;if(!pdv){toast('Scegli la data');return}if(!pq.teamA.length||!pq.teamB.length){toast('Servono giocatori in entrambe le squadre');return}pq.date=pdv;pq.stage='res';window.scrollTo(0,0)}
   else if(a==='tcol'){var tk=el.dataset.t,nc=TCOLS[+v][0],ok=tk==='A'?'B':'A',oc={};if(!D.cur)return;if(tcol(D.cur,ok)===nc){toast('È già il colore dell\'altra squadra');return}oc['color'+tk]=nc;upd('matches/current',oc)}
   else if(a==='tro'){openTrophies();return}
   else if(a==='awimg'){mkAwImg();return}
@@ -1479,6 +1494,7 @@ document.addEventListener('input',function(e){
   }
 });
 document.addEventListener('change',function(e){
+  if(e.target&&e.target.id==='pdate'&&S.past){S.past.date=e.target.value;return}
   var t0=e.target;if(t0&&t0.id==='photo'&&t0.files&&t0.files[0]){var fl=t0.files[0];t0.value='';readPhoto(fl);return}
   var el=e.target,id=el.id;
   if(id==='nick'&&me()){var nv=el.value.replace(/[<>&"]/g,'').trim().slice(0,14);if(nv)upd('players/'+UID,{nick:nv})}
