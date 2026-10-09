@@ -601,11 +601,11 @@ function voteCta(c){
   if(!sent)h+='<button class="primary" data-a="govote" data-v="lvl">Voti '+dn+'/'+tg.length+'</button>';
   h+='</div></div>';
   return h}
-function dlTs(iso){if(!iso)return 0;var d=new Date(iso+'T20:00:00');d.setDate(d.getDate()-1);return d.getTime()}
+function dlTs(iso){if(!iso)return 0;var d=new Date(iso+'T20:00:00');d.setDate(d.getDate()-2);return d.getTime()}
 function cdText(ts){var ms=ts-Date.now();if(ms<=0)return null;var t=Math.floor(ms/1000),dd=Math.floor(t/86400),hh=Math.floor(t%86400/3600),mm=Math.floor(t%3600/60),ss=t%60;function z(n){return n<10?'0'+n:''+n}return (dd?dd+(dd===1?' giorno ':' giorni ')+z(hh)+'h '+z(mm)+'m':z(hh)+':'+z(mm)+':'+z(ss))}
 function cdTick(){var e=document.getElementById('cd');if(!e)return;var ts=+e.dataset.ts,t=cdText(ts);e.classList.toggle('over',!t);e.classList.toggle('soon',!!t&&ts-Date.now()<3600000*3);e.querySelector('b').textContent=t||'Iscrizioni chiuse'}
 var lastEnd=null;setInterval(function(){cdTick();var e=ended();if(lastEnd!==null&&e!==lastEnd&&S.ready&&!S.dirty){var a=document.activeElement;if(!(a&&a.tagName==='INPUT'))render()}lastEnd=e},1000);
-function deadline(iso){if(!iso)return 'il giorno prima';var d=new Date(iso+'T12:00:00');d.setDate(d.getDate()-1);return d.toLocaleDateString('it-IT',{weekday:'long'})+' alle 20:00'}
+function deadline(iso){if(!iso)return 'due giorni prima';var d=new Date(iso+'T12:00:00');d.setDate(d.getDate()-2);return d.toLocaleDateString('it-IT',{weekday:'long'})+' alle 20:00'}
 function isoOf(d){var m=d.getMonth()+1,x=d.getDate();return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(x<10?'0':'')+x}
 function nextTuesday(){var d=new Date();d.setDate(d.getDate()+1);while(d.getDay()!==2)d.setDate(d.getDate()+1);return isoOf(d)}
 function toast(m){var t=document.getElementById('toast');clearTimeout(toast.h);clearTimeout(toast.k);t.hidden=true;t.classList.remove('out');t.textContent=m;void t.offsetWidth;t.hidden=false;toast.h=setTimeout(function(){t.classList.add('out');toast.k=setTimeout(function(){t.hidden=true;t.classList.remove('out')},260)},2600)}
