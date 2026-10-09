@@ -63,7 +63,7 @@ h2{font:400 30px/1 var(--display);text-transform:uppercase;margin:0 0 6px;text-w
 .whr .grpb{margin:0;width:auto;display:grid;gap:6px;justify-content:stretch;align-content:center;padding:4px 0;border:0;background:transparent;min-width:0}.whr .grpb .gind{justify-content:space-between;gap:6px}.whr .gtxt{font-size:12px;line-height:1.25}.wmt{font-size:14px;font-weight:800;line-height:1.2}.wfe{font-size:12px;font-weight:700;color:var(--muted)}.grpb.solo{border-top:2px dashed var(--bc);padding-top:12px;margin-top:12px}
 .gind,.grpb.solo{align-items:center}.gind{display:flex;align-items:center;gap:8px}
 .gtxt{font-size:13px;font-weight:800;color:var(--muted)}.gch{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--soft);font-size:13px;color:var(--ink);line-height:1;transition:none}.gch.o{transform:rotate(180deg)}
-.grpw{margin:0}
+.grpw{margin:0}.grpup{display:grid;place-items:center;width:100%;margin:2px 0 6px;padding:2px 0;background:none;border:0;color:var(--muted);cursor:pointer;min-height:0}.grpup span{display:grid;place-items:center;width:34px;height:22px;border-radius:12px;background:var(--soft);font-size:11px;color:var(--ink);line-height:1}
 .sure-e{font-size:56px;line-height:1;margin:6px 0 8px}
 #sure{position:fixed;inset:0;z-index:99;background:rgba(5,8,15,.86);display:grid;place-items:center;padding:20px;overflow:auto}
 #daily{position:fixed;inset:0;z-index:98;background:rgba(5,8,15,.82);display:grid;place-items:center;padding:20px;overflow:auto}
@@ -1023,7 +1023,7 @@ function banner(){
   if(!CANWRITE)return '<div class="banner">Puoi guardare ma non modificare. Chiedi al proprietario l\'accesso come collaboratore.</div>';
   return '';
 }
-function grpWrap(html){return S.grp?'<div id="grp" class="grpw">'+html+'</div>':''}
+function grpWrap(html){return S.grp?'<div id="grp" class="grpw"><button class="grpup" data-a="grpup" aria-label="Chiudi il gruppo"><span>▲</span></button>'+html+'</div>':''}
 function calmFx(){return !(window.gsap)||(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches)}
 function stepBar(c){
   var st=ended(c)?4:teamsReady()?3:(c.official||closedReg(c))?2:1,nm=['Iscrizioni','Squadre','Partita','Voti'],h='<div class="stp">';
@@ -2042,15 +2042,18 @@ document.addEventListener('click',function(e){
       gsap.fromTo(w,{height:0,opacity:0},{height:'auto',opacity:1,duration:.5,ease:'power3.out',overflow:'hidden',onComplete:function(){gsap.set(w,{clearProps:'all'})}});
       gsap.from(w.children,{opacity:0,x:-16,duration:.35,stagger:.05,delay:.1,ease:'power2.out',clearProps:'all'});
       var hb=w.querySelectorAll('.hbar i');gsap.from(hb,{scaleX:0,transformOrigin:'left center',duration:.6,stagger:.05,delay:.2,ease:'power3.out',clearProps:'transform'})}})}
-  else if(a==='grp'){
-    var gw=document.getElementById('grp');
+  else if(a==='grp'||a==='grpup'){
+    var gw=document.getElementById('grp'),up=a==='grpup';
+    if(up&&!S.grp)return;
+    function backUp(){var b=document.querySelector('.grpb');if(!b)return;var r=b.getBoundingClientRect();if(r.top<70||r.bottom>window.innerHeight-90){var y=r.top+window.pageYOffset-140;try{window.scrollTo({top:Math.max(0,y),behavior:'smooth'})}catch(e){window.scrollTo(0,Math.max(0,y))}}}
     if(S.grp&&gw&&!calmFx()){
       if(gw.dataset.busy)return;gw.dataset.busy='1';
-      gsap.to(el.querySelector('.gch'),{rotation:0,duration:.3,ease:'power2.inOut'});
-      gsap.to(gw.children,{opacity:0,y:-8,duration:.18,stagger:.02,ease:'power1.in'});
-      gsap.to(gw,{height:0,marginTop:0,duration:.35,delay:.1,ease:'power3.inOut',overflow:'hidden',onComplete:function(){S.grp=false;render()}});
+      var gc=document.querySelector('.grpb .gch');if(gc)gsap.to(gc,{rotation:0,duration:.25,ease:'power2.inOut'});
+      var ua=gw.querySelector('.grpup span');if(ua)gsap.to(ua,{y:-6,scale:1.25,duration:.12,yoyo:true,repeat:1,ease:'power1.out'});
+      gsap.to(gw.children,{opacity:0,y:-8,duration:.14,stagger:.015,ease:'power1.in'});
+      gsap.to(gw,{height:0,marginTop:0,duration:.28,delay:.08,ease:'power3.inOut',overflow:'hidden',onComplete:function(){S.grp=false;render();if(up)backUp()}});
       return}
-    S.grp=!S.grp;
+    S.grp=!S.grp;if(up&&!S.grp)setTimeout(backUp,40);
     if(S.grp)setTimeout(function(){var w=document.getElementById('grp');if(!w)return;var y=w.getBoundingClientRect().top+window.pageYOffset-84;try{window.scrollTo({top:Math.max(0,y),behavior:calmFx()?'auto':'smooth'})}catch(e){window.scrollTo(0,Math.max(0,y))}},60);
     if(S.grp&&!calmFx())fxOn({run:function(){
       var w=document.getElementById('grp');if(!w)return;
