@@ -1976,6 +1976,7 @@ document.addEventListener('click',function(e){
       gsap.to(gw,{height:0,marginTop:0,duration:.35,delay:.1,ease:'power3.inOut',overflow:'hidden',onComplete:function(){S.grp=false;render()}});
       return}
     S.grp=!S.grp;
+    if(S.grp)setTimeout(function(){var w=document.getElementById('grp');if(!w)return;var y=w.getBoundingClientRect().top+window.pageYOffset-84;try{window.scrollTo({top:Math.max(0,y),behavior:calmFx()?'auto':'smooth'})}catch(e){window.scrollTo(0,Math.max(0,y))}},60);
     if(S.grp&&!calmFx())fxOn({run:function(){
       var w=document.getElementById('grp');if(!w)return;
       var ch=document.querySelector('.grpb .gch');if(ch)gsap.fromTo(ch,{rotation:0},{rotation:180,duration:.4,ease:'back.out(2)'});
