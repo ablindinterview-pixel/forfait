@@ -1061,7 +1061,7 @@ function vPartita(){
   var off=!!c.official,L=lineup(),y=yesIds(),Q=queueIds(),mine=rsvpOf(UID),st=stats();
   var m=allIds().filter(function(id){return rsvpOf(id)==='maybe'}),n=allIds().filter(function(id){return rsvpOf(id)==='no'});
   var shown=L.length,miss=need()-shown;
-  h+=stepBar(c)+'<h2>Prossima partita</h2><p class="sub">Rispondi entro '+esc(deadline(c.date))+'. '+(off?'La formazione è ufficiale: chi si ritira ora conta come forfait.':'Puoi iscriverti fino al giorno prima. Da due giorni prima, se ti ritiri conta come forfait.')+'</p>';
+  h+=stepBar(c);
   h+='<div class="panel"><div class="ticket"><div><div class="label">'+fmtName(c)+' · '+per()+' contro '+per()+'</div><div class="when">'+esc(dLabel(c.date))+'</div><div class="where">'+esc(c.time||'Orario da definire')+' · '+esc(c.field||'Campo da definire')+'</div></div></div>';
   if(!off&&c.date)h+='<div class="cd" id="cd" data-ts="'+regTs(c.date)+'"><span class="label">Iscrizioni aperte ancora</span><b>'+(cdText(regTs(c.date))||'Iscrizioni chiuse')+'</b></div>';
   h+=wxHtml(c);
