@@ -156,9 +156,9 @@ button:focus-visible{outline:3px dashed var(--ink);outline-offset:3px}
 .votecta{margin:0 0 10px;padding:10px 12px;display:flex;align-items:center;gap:10px;border:var(--bw) solid var(--bc);border-radius:calc(var(--rk) * 16px);background:var(--yellow);color:var(--on-acc);box-shadow:var(--so) var(--so) 0 var(--shadow);animation:vcp 2s ease-in-out infinite}
 .votecta .vct{flex:1;min-width:0}.votecta .label{color:inherit;opacity:.8;margin:0;font-size:10px}.votecta b{display:block;font:400 19px/1.1 var(--display);text-transform:uppercase;margin:2px 0 0;white-space:nowrap}
 .votecta .vcb{display:flex;gap:6px;flex:none}.votecta .primary{background:var(--surface);color:var(--ink);width:auto;padding:9px 12px;font-size:13px;margin:0}
-.lastm .lmvp{display:inline-block;margin-top:6px;padding:3px 10px;border-radius:99px;background:var(--yellow);color:var(--on-acc);font-size:12px;font-weight:800;border:var(--bw) solid var(--bc)}
+.lastm .lmv{color:var(--yellow)}
 .sentb{border-color:var(--green)!important}.sentb .ok{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--green);color:var(--on-acc);font-size:12px;margin-right:6px}
-.lastm .lres{display:block;font:400 18px/1.2 var(--display);text-transform:uppercase;margin-top:2px}.lastm{padding-top:12px;padding-bottom:12px}
+.lastm .lres{display:block;font:400 17px/1.15 var(--display);text-transform:uppercase;margin-top:1px}.lastm{padding-top:7px;padding-bottom:7px;margin-bottom:10px}.lastm .acch{padding:0}
 @keyframes vcp{50%{box-shadow:var(--so) var(--so) 0 var(--shadow),0 0 0 6px rgba(255,225,74,.35)}}@media (prefers-reduced-motion:reduce){.votecta{animation:none}}
 select{font:inherit;font-weight:700;color:var(--ink);background:var(--surface);border:var(--bw) solid var(--bc);border-radius:10px;padding:6px 8px;max-width:48%}
 .acch{display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:0;padding:2px 0;color:var(--ink);font:inherit;cursor:pointer;text-align:left}
@@ -542,7 +542,7 @@ function lastCard(){
   var l=D.last,c=D.cur;if(!l||!c||c.status==='closed'||ended(c))return '';
   var op=!!(S.acc&&S.acc.last);
   var ca=tcol(l,'A'),cb=tcol(l,'B');
-  var h='<div class="panel lastm acc'+(op?' open':'')+'" style="background-image:linear-gradient(100deg,'+ca+'55 0%,rgba(0,0,0,0) 38%,rgba(0,0,0,0) 62%,'+cb+'55 100%)"><button class="acch" data-a="acc" data-v="last" aria-expanded="'+op+'"><span style="min-width:0"><span class="label" style="display:block;margin:0">🏆 Appena giocata · '+esc(dShort(l.date))+'</span><span class="lres">'+esc(tn(l,'A'))+' '+(l.sa||0)+' – '+(l.sb||0)+' '+esc(tn(l,'B'))+'</span>'+(l.mvp?'<span class="lmvp">⭐ MVP '+esc(pname(l.mvp))+'</span>':'')+'</span><span class="chev">›</span></button>';
+  var h='<div class="panel lastm acc'+(op?' open':'')+'" style="background-image:linear-gradient(100deg,'+ca+'55 0%,rgba(0,0,0,0) 38%,rgba(0,0,0,0) 62%,'+cb+'55 100%)"><button class="acch" data-a="acc" data-v="last" aria-expanded="'+op+'"><span style="min-width:0"><span class="label" style="display:block;margin:0;font-size:10px">🏆 '+esc(dShort(l.date))+(l.mvp?' · <span class="lmv">⭐ MVP '+esc(pname(l.mvp))+'</span>':'')+'</span><span class="lres">'+esc(tn(l,'A'))+' '+(l.sa||0)+' – '+(l.sb||0)+' '+esc(tn(l,'B'))+'</span></span><span class="chev">›</span></button>';
   if(op)h+='<div class="note" style="margin:4px 0 8px">MVP: <b>'+esc(pname(l.mvp))+'</b></div><button class="ghost" data-a="img" data-id="'+esc(l.id)+'">Riepilogo da condividere</button><button class="ghost" data-a="tab" data-v="pagella">Vai alla Pagella</button>';
   h+='</div>';
   return h}
