@@ -732,58 +732,60 @@ function mkImg(mid){
     var ph=r[1],cw=1080,ch=1350,c=document.createElement('canvas');c.width=cw;c.height=ch;var x=c.getContext('2d');
     var D1='700 {s}px "Chakra Petch","Arial Narrow",sans-serif',B1='600 {s}px "Barlow Semi Condensed",Arial,sans-serif';
     function ft(t,s){return t.replace('{s}',s)}
-    var cA=tvis(tcol(m,'A')),cB=tvis(tcol(m,'B')),kA=tcol(m,'A'),kB=tcol(m,'B');
-    function poly(p){x.beginPath();x.moveTo(p[0][0],p[0][1]);for(var i=1;i<p.length;i++)x.lineTo(p[i][0],p[i][1]);x.closePath()}
-    // sfondo da studio televisivo
-    var g=x.createLinearGradient(0,0,0,ch);g.addColorStop(0,'#0c1426');g.addColorStop(1,'#05080f');x.fillStyle=g;x.fillRect(0,0,cw,ch);
-    x.save();x.globalAlpha=.30;x.fillStyle=cA;poly([[0,0],[520,0],[160,ch*0.62],[0,ch*0.62]]);x.fill();x.fillStyle=cB;poly([[cw,0],[cw-520,0],[cw-160,ch*0.62],[cw,ch*0.62]]);x.fill();x.restore();
-    x.save();x.globalAlpha=.07;x.strokeStyle='#fff';x.lineWidth=2;for(var q=-ch;q<cw+ch;q+=44){x.beginPath();x.moveTo(q,0);x.lineTo(q+ch,ch);x.stroke()}x.restore();
-    var vg=x.createRadialGradient(540,520,200,540,520,900);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');x.fillStyle=vg;x.fillRect(0,0,cw,ch);
+    var cA=tvis(tcol(m,'A')),cB=tvis(tcol(m,'B')),kA=tcol(m,'A'),kB=tcol(m,'B'),BD='#2f3d66',SF='#141b30',SH='#1c2748';
+    function rrp(a,b,w,h,r){x.beginPath();if(x.roundRect)x.roundRect(a,b,w,h,r);else x.rect(a,b,w,h)}
+    function card(a,b,w,h,r,fill,bd,sh){if(sh){x.fillStyle=SH;rrp(a+8,b+8,w,h,r);x.fill()}x.fillStyle=fill;rrp(a,b,w,h,r);x.fill();x.strokeStyle=bd||BD;x.lineWidth=4;rrp(a,b,w,h,r);x.stroke()}
+    function lab(t,a,b,col,al){x.fillStyle=col||'#8d9ac0';x.font=ft(B1,26);x.textAlign=al||'left';if('letterSpacing' in x)x.letterSpacing='4px';x.fillText(t.toUpperCase(),a,b);if('letterSpacing' in x)x.letterSpacing='0px'}
+    // sfondo come l'app
+    x.fillStyle='#0b0f1a';x.fillRect(0,0,cw,ch);
+    var ra=x.createRadialGradient(0,120,0,0,120,640);ra.addColorStop(0,cA+'55');ra.addColorStop(1,cA+'00');x.fillStyle=ra;x.fillRect(0,0,cw,ch);
+    var rb=x.createRadialGradient(cw,120,0,cw,120,640);rb.addColorStop(0,cB+'55');rb.addColorStop(1,cB+'00');x.fillStyle=rb;x.fillRect(0,0,cw,ch);
+    x.strokeStyle=BD;x.lineWidth=6;x.strokeRect(30,30,cw-60,ch-60);
+    var tb=x.createLinearGradient(30,0,cw-30,0);tb.addColorStop(0,cA);tb.addColorStop(.5,'#39ff88');tb.addColorStop(1,cB);x.fillStyle=tb;x.fillRect(30,30,cw-60,12);
     // testata
-    drawLogo(x,50,36,92);x.textBaseline='alphabetic';x.textAlign='left';x.fillStyle='#f2f5ff';x.font=ft(D1,58);x.fillText('FORFAIT',156,104);
-    x.fillStyle='#ffe14a';poly([[700,48],[1040,48],[1010,120],[670,120]]);x.fill();
-    x.fillStyle='#0b0f1a';x.font=ft(D1,34);x.textAlign='center';x.fillText('RISULTATO FINALE',855,96,280);
-    x.fillStyle='#9fb0d8';x.font=ft(B1,30);x.textAlign='left';x.fillText((dLabel(m.date)||'').toUpperCase()+(m.format==='calciotto'?'  ·  CALCIOTTO':'  ·  CALCETTO'),56,172);
+    drawLogo(x,74,62,92);x.textBaseline='alphabetic';x.textAlign='left';x.fillStyle='#f2f5ff';x.font=ft(D1,58);x.fillText('FORFAIT',184,134);
+    card(690,78,316,70,35,'#ffe14a','#0b0f1a',true);x.fillStyle='#0b0f1a';x.font=ft(D1,30);x.textAlign='center';x.fillText('RISULTATO FINALE',848,123,280);
+    lab((dLabel(m.date)||'')+' · '+(m.format==='calciotto'?'calciotto':'calcetto'),76,208);
     // tabellone
-    var y0=210,h0=290;
-    var ga=x.createLinearGradient(40,0,540,0);ga.addColorStop(0,kA);ga.addColorStop(1,shade(kA,-.35));x.fillStyle=ga;poly([[40,y0],[548,y0],[500,y0+h0],[40,y0+h0]]);x.fill();
-    var gb=x.createLinearGradient(1040,0,540,0);gb.addColorStop(0,kB);gb.addColorStop(1,shade(kB,-.35));x.fillStyle=gb;poly([[1040,y0],[532,y0],[580,y0+h0],[1040,y0+h0]]);x.fill();
-    x.strokeStyle='rgba(255,255,255,.85)';x.lineWidth=4;poly([[40,y0],[548,y0],[500,y0+h0],[40,y0+h0]]);x.stroke();poly([[1040,y0],[532,y0],[580,y0+h0],[1040,y0+h0]]);x.stroke();
-    x.textAlign='left';x.fillStyle=tcf(kA);x.font=ft(D1,50);x.fillText(tn(m,'A').toUpperCase(),76,y0+72,380);
-    x.textAlign='right';x.fillStyle=tcf(kB);x.fillText(tn(m,'B').toUpperCase(),1004,y0+72,380);
-    x.font=ft(D1,230);x.textAlign='right';x.fillStyle=tcf(kA);x.fillText(''+(m.sa||0),462,y0+265);
-    x.textAlign='left';x.fillStyle=tcf(kB);x.fillText(''+(m.sb||0),618,y0+265);
-    x.fillStyle='#ffe14a';rr(x,490,y0+h0/2-34,100,68,16);x.fillStyle='#0b0f1a';x.font=ft(D1,40);x.textAlign='center';x.fillText('FT',540,y0+h0/2+14);
+    var y0=240,h0=250;
+    [[76,kA,tn(m,'A'),m.sa||0,'l'],[560,kB,tn(m,'B'),m.sb||0,'r']].forEach(function(t){
+      card(t[0],y0,444,h0,30,t[1],BD,true);
+      x.fillStyle=tcf(t[1]);x.textAlign=t[4]==='l'?'left':'right';var tx0=t[4]==='l'?t[0]+30:t[0]+414;
+      x.font=ft(D1,44);x.fillText(t[2].toUpperCase(),tx0,y0+68,360);
+      x.font=ft(D1,170);x.textAlign=t[4]==='l'?'right':'left';x.fillText(''+t[3],t[4]==='l'?t[0]+414:t[0]+30,y0+h0-34);
+      x.textAlign='left'});
+    x.fillStyle='#ffe14a';x.beginPath();x.arc(540,y0+h0/2,44,0,7);x.fill();x.strokeStyle='#0b0f1a';x.lineWidth=5;x.stroke();
+    x.fillStyle='#0b0f1a';x.font=ft(D1,34);x.textAlign='center';x.fillText('FT',540,y0+h0/2+12);
     // marcatori
     var sy=540,sc=Object.keys(m.goals||{}).filter(function(k){return m.goals[k]>0}).sort(function(a,b){return m.goals[b]-m.goals[a]}).map(function(k){return pname(k)+(m.goals[k]>1?' ×'+m.goals[k]:'')});
-    x.fillStyle='rgba(255,255,255,.10)';poly([[40,sy],[1040,sy],[1040,sy+84],[40,sy+84]]);x.fill();
-    x.fillStyle='#39ff88';poly([[40,sy],[270,sy],[240,sy+84],[40,sy+84]]);x.fill();
-    x.fillStyle='#06210f';x.font=ft(D1,34);x.textAlign='left';x.fillText('⚽ GOL',66,sy+55);
-    x.fillStyle='#f2f5ff';x.font=ft(B1,36);x.fillText(sc.length?sc.join('   ·   '):'Nessun marcatore',296,sy+54,730);
+    card(76,sy,928,100,24,SF,BD,false);
+    lab('Marcatori',104,sy+40,'#8d9ac0');
+    x.textAlign='left';x.fillStyle='#39ff88';x.beginPath();x.arc(112,sy+72,8,0,7);x.fill();
+    x.fillStyle='#f2f5ff';x.font=ft(B1,36);x.fillText(sc.length?sc.join('   ·   '):'Nessun marcatore',132,sy+82,840);
     // formazioni
-    var nmax=Math.max(1,Math.min(8,Math.max((m.teamA||[]).length,(m.teamB||[]).length))),rh=Math.min(72,Math.floor(396/nmax));
-    function col(ids,x0,w,k,kc){
-      var yy=660;x.fillStyle=k;poly([[x0,yy],[x0+w,yy],[x0+w,yy+56],[x0,yy+56]]);x.fill();
-      x.fillStyle=tcf(k);x.font=ft(D1,32);x.textAlign='left';x.fillText('FORMAZIONE · '+tn(m,x0<500?'A':'B').toUpperCase(),x0+18,yy+39,w-30);
-      yy+=56;
-      ids.filter(function(id){return P(id)||isG(id)||true}).slice(0,8).forEach(function(id,i){
-        x.fillStyle=i%2?'rgba(255,255,255,.04)':'rgba(255,255,255,.10)';x.fillRect(x0,yy,w,rh);
-        x.fillStyle=kc;x.fillRect(x0,yy,6,rh);
-        x.fillStyle='#f2f5ff';x.font=ft(B1,34);x.textAlign='left';x.fillText(pname(id),x0+22,yy+rh/2+12,w-170);
-        var g2=(m.goals||{})[id]||0,as=(m.assists||{})[id]||0,tx=(g2?g2+'⚽':'')+(g2&&as?'  ':'')+(as?as+' ass':'');if(tx){x.textAlign='right';x.fillStyle='#39ff88';x.font=ft(D1,28);x.fillText(tx,x0+w-14,yy+rh/2+10);x.textAlign='left'}
+    var nmax=Math.max(1,Math.min(8,Math.max((m.teamA||[]).length,(m.teamB||[]).length))),rh=Math.min(60,Math.floor(340/nmax)),py=670,ph2=70+nmax*rh+14;
+    function col(ids,x0,w,k,nm){
+      card(x0,py,w,ph2,24,SF,BD,false);
+      x.fillStyle=k;x.beginPath();x.arc(x0+36,py+38,13,0,7);x.fill();x.strokeStyle='#f2f5ff';x.lineWidth=3;x.stroke();
+      lab(nm,x0+64,py+46,'#8d9ac0');
+      var yy=py+70;
+      ids.slice(0,8).forEach(function(id,i){
+        x.strokeStyle=BD;x.lineWidth=2;x.setLineDash([10,8]);x.beginPath();x.moveTo(x0+24,yy);x.lineTo(x0+w-24,yy);x.stroke();x.setLineDash([]);
+        x.fillStyle='#f2f5ff';x.font=ft(B1,34);x.textAlign='left';x.fillText(pname(id),x0+28,yy+rh/2+11,w-180);
+        var g2=(m.goals||{})[id]||0,as=(m.assists||{})[id]||0,tx=(g2?g2+' gol':'')+(g2&&as?' · ':'')+(as?as+' ass':'');
+        if(tx){x.textAlign='right';x.fillStyle='#39ff88';x.font=ft(D1,26);x.fillText(tx,x0+w-28,yy+rh/2+9);x.textAlign='left'}
         yy+=rh});
     }
-    col(m.teamA||[],40,490,kA,cA);col(m.teamB||[],550,490,kB,cB);
+    col(m.teamA||[],76,452,kA,tn(m,'A'));col(m.teamB||[],552,452,kB,tn(m,'B'));
     // MVP
-    var my=1138,mh=150,gm=x.createLinearGradient(40,0,1040,0);gm.addColorStop(0,'#ffe14a');gm.addColorStop(1,'#ff9f1c');x.fillStyle=gm;poly([[40,my],[1040,my],[1010,my+mh],[40,my+mh]]);x.fill();
-    var cx=130,cy=my+mh/2;x.save();x.beginPath();x.arc(cx,cy,56,0,7);x.closePath();x.clip();
-    if(ph){var sz=Math.min(ph.width,ph.height);x.drawImage(ph,(ph.width-sz)/2,(ph.height-sz)/2,sz,sz,cx-56,cy-56,112,112)}
-    else{x.fillStyle=mp.color||'#8d9ac0';x.fillRect(cx-56,cy-56,112,112);x.fillStyle='#07101f';x.font=ft(D1,64);x.textAlign='center';x.fillText((pname(m.mvp)||'?').charAt(0).toUpperCase(),cx,cy+22)}
-    x.restore();x.strokeStyle='#0b0f1a';x.lineWidth=6;x.beginPath();x.arc(cx,cy,56,0,7);x.stroke();
-    x.textAlign='left';x.fillStyle='#0b0f1a';x.font=ft(B1,32);x.fillText('★ MVP DELLA PARTITA',214,my+52);
-    x.font=ft(D1,76);x.fillText((pname(m.mvp)||'').toUpperCase(),214,my+122,780);
-    // piè
-    x.fillStyle='#9fb0d8';x.font=ft(B1,28);x.textAlign='center';x.fillText('FORFAIT  ·  IL CALCETTO DEL MARTEDÌ',540,1330);
+    var my=1100,mh=150;card(76,my,928,mh,28,'#ffe14a','#0b0f1a',true);
+    var cx=170,cy=my+mh/2;x.save();x.beginPath();x.arc(cx,cy,52,0,7);x.closePath();x.clip();
+    if(ph){var sz=Math.min(ph.width,ph.height);x.drawImage(ph,(ph.width-sz)/2,(ph.height-sz)/2,sz,sz,cx-52,cy-52,104,104)}
+    else{x.fillStyle=mp.color||'#8d9ac0';x.fillRect(cx-52,cy-52,104,104);x.fillStyle='#07101f';x.font=ft(D1,60);x.textAlign='center';x.fillText((pname(m.mvp)||'?').charAt(0).toUpperCase(),cx,cy+21)}
+    x.restore();x.strokeStyle='#0b0f1a';x.lineWidth=6;x.beginPath();x.arc(cx,cy,52,0,7);x.stroke();
+    x.textAlign='left';lab('★ MVP della partita',250,my+58,'#0b0f1a');
+    x.fillStyle='#0b0f1a';x.font=ft(D1,70);x.fillText((pname(m.mvp)||'').toUpperCase(),250,my+122,730);
+    x.fillStyle='#8d9ac0';x.font=ft(B1,26);x.textAlign='center';x.fillText('IL CALCETTO DEL MARTEDÌ',540,1296);
     S.img=c.toDataURL('image/png');S.imgName='forfait-'+(m.date||'partita')+'.png';
     render();window.scrollTo(0,0);
     fxOn({run:function(){}});
