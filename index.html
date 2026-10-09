@@ -98,8 +98,11 @@ button:focus-visible{outline:3px dashed var(--ink);outline-offset:3px}
 .pill.yes{background:var(--green)}.pill.maybe{background:var(--yellow)}.pill.no{background:var(--pink)}
 .avatar{width:36px;height:36px;border-radius:50%;border:var(--bw) solid var(--bc);background:var(--blue);color:#fff;display:grid;place-items:center;font:400 15px var(--display);flex:none}
 .avatar.av-q{border-radius:10px}
-.avatar.av-e{border-radius:0;clip-path:polygon(25% 4%,75% 4%,100% 50%,75% 96%,25% 96%,0 50%)}
-.avatar.av-s{border-radius:0;clip-path:polygon(0 0,100% 0,100% 58%,50% 100%,0 58%)}
+.avatar.av-e{border:0;border-radius:0;clip-path:polygon(25% 4%,75% 4%,100% 50%,75% 96%,25% 96%,0 50%);position:relative}
+.avatar.av-e .avin{clip-path:polygon(25% 4%,75% 4%,100% 50%,75% 96%,25% 96%,0 50%)}
+.avatar.av-s{border:0;border-radius:0;clip-path:polygon(0 0,100% 0,100% 58%,50% 100%,0 58%);position:relative}
+.avatar.av-s .avin{clip-path:polygon(0 0,100% 0,100% 58%,50% 100%,0 58%)}
+.avatar.av-e .avin,.avatar.av-s .avin{position:absolute;inset:3px;display:grid;place-items:center;overflow:hidden;font:inherit}.avatar.big.av-e .avin,.avatar.big.av-s .avin{inset:5px}.pav .avatar.big.av-e .avin,.pav .avatar.big.av-s .avin{inset:8px}
 .avatar{overflow:hidden}.avatar .ph{width:100%;height:100%;object-fit:cover;display:block}
 #photolb{position:fixed;inset:0;z-index:95;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:20px}
 #photolb .lbc{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;color:#fff;max-width:100%}
@@ -550,7 +553,9 @@ function lastMvp(){var m=D.history&&D.history[0];return m&&m.mvp||null}
 function avHasPh(p){return !!(p&&p.avc==='f'&&typeof p.photo==='string'&&p.photo.indexOf('data:image/')===0)}
 function avHtml(id,p,big){p=p||P(id)||{};var g=isG(id),s=g?'c':(p.avs||'c'),col=esc(p.color||(g?'#8d9ac0':COLORS[0]));
   var st=g?'background:'+col+';color:#07101f':avHasPh(p)?'background:var(--surface);border-color:'+col:'background:var(--surface);background:color-mix(in srgb,'+col+' 24%,var(--surface));color:'+col+';border-color:'+col;
-  var h='<div class="avatar av-'+s+(big?' big':'')+'"'+(id&&!g?' data-pid="'+esc(id)+'"':'')+' style="'+st+'">'+avInner(id,p)+'</div>';return (id&&id===lastMvp())?'<span class="avw'+(big?' big':'')+'">'+h+CROWN+'</span>':h}
+  var h;
+  if(s==='e'||s==='s')h='<div class="avatar av-'+s+(big?' big':'')+'"'+(id&&!g?' data-pid="'+esc(id)+'"':'')+' style="background:'+col+'"><span class="avin" style="'+st.replace(/;?border-color:[^;]*/,'')+'">'+avInner(id,p)+'</span></div>';
+  else h='<div class="avatar av-'+s+(big?' big':'')+'"'+(id&&!g?' data-pid="'+esc(id)+'"':'')+' style="'+st+'">'+avInner(id,p)+'</div>';return (id&&id===lastMvp())?'<span class="avw'+(big?' big':'')+'">'+h+CROWN+'</span>':h}
 function curId(){return D.cur?D.cur.id:null}
 function rsvpOf(id){if(isG(id))return guestList().some(function(g){return g.id===id})?'yes':null;var r=D.rsvps[id];return r&&r.matchId===curId()?r.v:null}
 function offList(){return D.cur&&D.cur.official||[]}
