@@ -242,6 +242,12 @@ select{font:inherit;font-weight:700;color:var(--ink);background:var(--surface);b
 .hbar{flex:1.2;height:12px;background:var(--soft);border:2px solid var(--ink);border-radius:99px;overflow:hidden;min-width:40px}
 .hbar i{display:block;height:100%;background:var(--pink)}
 .num{font:400 20px var(--display);min-width:38px;text-align:right;font-variant-numeric:tabular-nums}
+.arcbar input,.aedit input{width:100%;box-sizing:border-box;font:inherit;padding:10px 14px;border:var(--bw) solid var(--bc);border-radius:14px;background:var(--surface);color:inherit}
+.arcbar{margin-bottom:8px}.arcf{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;align-items:center}
+.arcf select{margin-left:auto;font:inherit;font-weight:800;font-size:14px;padding:5px 10px;border:var(--bw) solid var(--bc);border-radius:99px;background:var(--surface);color:inherit}
+.arm{margin:14px 0 2px;color:var(--muted)}.arc-n{font-size:12px;color:var(--muted);margin:2px 0 4px}
+.td{display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 6px;vertical-align:middle;border:2px solid var(--bc)}
+.aedit{display:grid;gap:8px;margin:8px 0}.aedit label{display:grid;gap:3px;font-size:12px;font-weight:800;color:var(--muted)}
 .hist{padding:10px 0;border-top:2px dashed var(--soft)}
 .hist:first-child{border-top:0}
 .hist .res{font:400 20px var(--display);text-transform:uppercase;font-variant-numeric:tabular-nums}
@@ -1244,7 +1250,7 @@ function vPagella(){
   function top(key){var b=null;ids.forEach(function(id){if(st[id][key]>0&&(!b||st[id][key]>st[b][key]))b=id});return b}
   function aw(label,key,u1,u2){var b=top(key);return '<div class="award"><div class="label">'+label+'</div><div class="v">'+(b?esc(pname(b)):'—')+'</div><div class="d">'+(b?st[b][key]+' '+(st[b][key]===1?u1:u2):'nessun dato')+'</div></div>'}
   h+='<div class="awards">'+aw('Capocannoniere','g','gol','gol')+aw('MVP','mvp','premio','premi')+aw('Più presente','pl','partita','partite')+aw('Più forfait','fg','forfait','forfait')+'</div>';
-  h+='<div class="tabs2">'+[['premi','Premi'],['xi','Formazione tipo'],['record','Record'],['marcatori','Marcatori'],['assist','Assist'],['media','Media gol'],['mvp','MVP'],['presenze','Presenze'],['serie','Serie'],['coppie','Coppie'],['forfait','Forfait'],['albo','Albo d\'oro']].map(function(x){return '<button class="chip '+(S.sub===x[0]?'on':'')+'" data-a="sub" data-v="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div><div class="panel">';
+  h+='<div class="tabs2">'+[['premi','Premi'],['xi','Formazione tipo'],['record','Record'],['marcatori','Marcatori'],['assist','Assist'],['media','Media gol'],['mvp','MVP'],['presenze','Presenze'],['serie','Serie'],['coppie','Coppie'],['forfait','Forfait'],['albo','Archivio']].map(function(x){return '<button class="chip '+(S.sub===x[0]?'on':'')+'" data-a="sub" data-v="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div><div class="panel">';
   function list(key){
     var arr=ids.slice().sort(function(a,b){return st[b][key]-st[a][key]}),max=Math.max(1,arr.length?st[arr[0]][key]:1);
     if(!arr.length)return '<div class="empty">Ancora nessun giocatore.</div>';
@@ -1261,21 +1267,54 @@ function vPagella(){
   if(S.sub==='mvp')h+=list('mvp');
   if(S.sub==='presenze')h+=list('pl');
   if(S.sub==='forfait')h+=list('fg');
-  if(S.sub==='albo'){
-    if(!D.history.length)h+='<div class="empty">Ancora nessuna partita. Dopo la prima compare qui.</div>';
-    D.history.forEach(function(m){
-      var op=S.openH===m._id;
-      h+='<div class="hist"><div data-a="hist" data-id="'+esc(m._id)+'" role="button" tabindex="0" style="cursor:pointer"><div class="label">'+esc(dShort(m.date))+' · '+(m.format==='calciotto'?'calciotto · ':'')+(op?'chiudi':'dettagli')+'</div><div class="res">'+esc(tn(m,'A'))+' '+(m.sa||0)+' – '+(m.sb||0)+' '+esc(tn(m,'B'))+'</div><div style="color:var(--muted)">MVP '+esc(pname(m.mvp))+'</div></div>';
-      if(op){
-        var gl=Object.keys(m.goals||{}).filter(function(k){return m.goals[k]>0}).sort(function(a,b){return m.goals[b]-m.goals[a]}).map(function(k){return esc(pname(k))+' '+m.goals[k]}).join(', ');
-        h+='<div class="hdet"><p class="note"><b>'+esc(tn(m,'A'))+':</b> '+esc((m.teamA||[]).map(pname).join(', ')||'—')+'</p><p class="note"><b>'+esc(tn(m,'B'))+':</b> '+esc((m.teamB||[]).map(pname).join(', ')||'—')+'</p><p class="note"><b>Marcatori:</b> '+(gl||'—')+'</p><p class="note"><b>Assist:</b> '+(Object.keys(m.assists||{}).filter(function(k){return m.assists[k]>0}).sort(function(a,b){return m.assists[b]-m.assists[a]}).map(function(k){return esc(pname(k))+' '+m.assists[k]}).join(', ')||'—')+'</p>'+(m.og&&Object.keys(m.og).some(function(k){return m.og[k]>0})?'<p class="note"><b>Autogol:</b> '+Object.keys(m.og).filter(function(k){return m.og[k]>0}).map(function(k){return esc(pname(k))+' '+m.og[k]}).join(', ')+'</p>':'')+'<button class="ghost" data-a="img" data-id="'+esc(m._id)+'">Crea il riepilogo da condividere</button>'+(ADMIN?'<button class="ghost" data-a="editres" data-id="'+esc(m._id)+'">Correggi il risultato</button>':'')+'</div>';
-      }
-      h+='</div>';
-    });
-  }
+  if(S.sub==='albo')h+=arcPanel();
   return h+'</div>';
 }
 
+
+
+/* archivio partite: ricerca, filtri, raggruppo per mese, modifica (admin) */
+var MESI=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+function arcMonthKey(m){return (m.date||'').slice(0,7)}
+function arcMatch(m){
+  var q=(S.aq||'').trim().toLowerCase(),f=S.af||'all',mo=S.am||'';
+  if(mo&&arcMonthKey(m)!==mo)return false;
+  var inA=UID&&(m.teamA||[]).indexOf(UID)>=0,inB=UID&&(m.teamB||[]).indexOf(UID)>=0;
+  if(f!=='all'){if(!inA&&!inB)return false;var my=inA?(m.sa||0):(m.sb||0),op=inA?(m.sb||0):(m.sa||0);
+    if(f==='win'&&!(my>op))return false;if(f==='lose'&&!(my<op))return false;if(f==='draw'&&my!==op)return false}
+  if(q){
+    var d=m.date?new Date(m.date+'T12:00:00'):null;
+    var hay=[m.date,d?MESI[d.getMonth()]+' '+d.getFullYear():'',tn(m,'A'),tn(m,'B'),pname(m.mvp)].concat((m.teamA||[]).map(pname),(m.teamB||[]).map(pname),Object.keys(m.goals||{}).filter(function(k){return m.goals[k]>0}).map(pname)).join(' | ').toLowerCase();
+    return q.split(/\s+/).every(function(w){return hay.indexOf(w)>=0})}
+  return true}
+function arcDet(m){
+  var gl=Object.keys(m.goals||{}).filter(function(k){return m.goals[k]>0}).sort(function(a,b){return m.goals[b]-m.goals[a]}).map(function(k){return esc(pname(k))+' '+m.goals[k]}).join(', ');
+  var as=Object.keys(m.assists||{}).filter(function(k){return m.assists[k]>0}).sort(function(a,b){return m.assists[b]-m.assists[a]}).map(function(k){return esc(pname(k))+' '+m.assists[k]}).join(', ');
+  var og=Object.keys(m.og||{}).filter(function(k){return m.og[k]>0}).map(function(k){return esc(pname(k))+' '+m.og[k]}).join(', ');
+  var h='<div class="hdet"><p class="note"><b>'+esc(tn(m,'A'))+':</b> '+esc((m.teamA||[]).map(pname).join(', ')||'—')+'</p><p class="note"><b>'+esc(tn(m,'B'))+':</b> '+esc((m.teamB||[]).map(pname).join(', ')||'—')+'</p><p class="note"><b>Marcatori:</b> '+(gl||'—')+'</p><p class="note"><b>Assist:</b> '+(as||'—')+'</p>'+(og?'<p class="note"><b>Autogol:</b> '+og+'</p>':'')+'<button class="ghost" data-a="img" data-id="'+esc(m._id)+'">Crea il riepilogo da condividere</button>';
+  if(ADMIN){
+    h+='<button class="ghost" data-a="editres" data-id="'+esc(m._id)+'">Correggi risultato, marcatori e MVP</button>';
+    if(S.aed===m._id)h+='<div class="aedit"><label>Data<input type="date" id="edate" value="'+esc(m.date||'')+'"></label><label>Nome squadra 1<input id="enameA" maxlength="14" value="'+esc(tn(m,'A'))+'"></label><label>Nome squadra 2<input id="enameB" maxlength="14" value="'+esc(tn(m,'B'))+'"></label><button class="primary" data-a="aesave" data-id="'+esc(m._id)+'">Salva le modifiche</button></div>';
+    else h+='<button class="ghost" data-a="aed" data-id="'+esc(m._id)+'">Modifica data e nomi squadre</button>';
+    h+='<button class="ghost" data-a="adel" data-id="'+esc(m._id)+'" style="color:#d33">'+(S.adelAsk===m._id?'Tocca ancora per eliminare':'Elimina la partita')+'</button>'}
+  return h+'</div>'}
+function arcList(){
+  var L=D.history.filter(arcMatch);
+  if(!L.length)return '<div class="empty">'+(D.history.length?'Nessuna partita con questi filtri.':'Ancora nessuna partita. Dopo la prima compare qui.')+'</div>';
+  var h='<div class="arc-n">'+np(L.length,'partita','partite')+'</div>',cur='';
+  L.forEach(function(m){
+    var k=arcMonthKey(m);
+    if(k!==cur){cur=k;var d=m.date?new Date(m.date+'T12:00:00'):null;h+='<div class="label arm">'+(d?MESI[d.getMonth()]+' '+d.getFullYear():'Senza data')+'</div>'}
+    var op=S.openH===m._id,sa=m.sa||0,sb=m.sb||0;
+    h+='<div class="hist"><div data-a="hist" data-id="'+esc(m._id)+'" role="button" tabindex="0" style="cursor:pointer"><div class="label">'+esc(dShort(m.date))+' · '+(m.format==='calciotto'?'calciotto · ':'')+(op?'chiudi':'dettagli')+'</div><div class="res"><i class="td" style="background:'+tcol(m,'A')+'"></i>'+esc(tn(m,'A'))+' '+sa+' – '+sb+' '+esc(tn(m,'B'))+'<i class="td" style="background:'+tcol(m,'B')+'"></i></div><div style="color:var(--muted)">MVP '+esc(pname(m.mvp))+'</div></div>'+(op?arcDet(m):'')+'</div>'});
+  return h}
+function arcPanel(){
+  var mons=[];D.history.forEach(function(m){var k=arcMonthKey(m);if(k&&mons.indexOf(k)<0)mons.push(k)});
+  var f=S.af||'all',h='<div class="arcbar"><input id="aq" type="search" placeholder="Cerca giocatore, squadra, mese…" value="'+esc(S.aq||'')+'" autocomplete="off"></div>';
+  h+='<div class="chips arcf">'+[['all','Tutte']].concat(UID&&me()?[['win','Vinte'],['draw','Pari'],['lose','Perse']]:[]).map(function(x){return '<button class="chip '+(f===x[0]?'on':'')+'" data-a="af" data-v="'+x[0]+'">'+x[1]+'</button>'}).join('')+(mons.length>1?'<select id="am"><option value="">Tutti i mesi</option>'+mons.map(function(k){var p=k.split('-');return '<option value="'+k+'"'+(S.am===k?' selected':'')+'>'+MESI[+p[1]-1]+' '+p[0]+'</option>'}).join('')+'</select>':'')+'</div>';
+  if(f!=='all')h+='<p class="note" style="margin:0 0 6px">Solo le partite in cui hai giocato.</p>';
+  return h+'<div id="arlist">'+arcList()+'</div>'}
+function arcRefresh(){var e=$1('#arlist');if(e)e.innerHTML=arcList()}
 
 /* trofei personali a livelli, calcolati dalla storia delle partite */
 var TIERS=[['Bronzo','#cd7f32'],['Argento','#c0c8d6'],['Oro','#ffd23f'],['Platino','#7fe3ff'],['Diamante','#b58cff']];
@@ -1868,6 +1907,17 @@ document.addEventListener('click',function(e){
   else if(a==='copy'){copyRem();return}
   else if(a==='intro'){if(window.showIntro)window.showIntro(true);return}
   else if(a==='share'){shareNow();var sb=$1('[data-a="share"]');if(sb)pop(sb,1.25);return}
+  else if(a==='af'){S.af=v;S.openH=null;render()}
+  else if(a==='aed'){if(!ADMIN)return;S.aed=id;render()}
+  else if(a==='aesave'){
+    if(!ADMIN)return;var dv=($1('#edate')||{}).value,na=cleanName(($1('#enameA')||{}).value||''),nb=cleanName(($1('#enameB')||{}).value||'');
+    if(!dv){toast('Inserisci la data');return}
+    var o={date:dv};if(na)o.nameA=na;if(nb)o.nameB=nb;
+    upd('history/'+id,o).then(function(){S.aed=null;toast('Partita aggiornata');render()})}
+  else if(a==='adel'){
+    if(!ADMIN)return;
+    if(S.adelAsk!==id){S.adelAsk=id;render();setTimeout(function(){if(S.adelAsk===id){S.adelAsk=null;render()}},4000);return}
+    S.adelAsk=null;S.openH=null;del('history/'+id).then(function(){toast('Partita eliminata');render()})}
   else if(a==='hist'){S.openH=S.openH===id?null:id;if(S.openH===id)fxOn({run:function(){reveal($1('.hdet'))}})}
   else if(a==='img'){mkImg(id);return}
   else if(a==='imgx'){S.img=null}
@@ -1929,6 +1979,7 @@ document.addEventListener('click',function(e){
 });
 document.addEventListener('input',function(e){
   var el=e.target;
+  if(el.id==='aq'){S.aq=el.value.slice(0,40);arcRefresh();return}
   if(el.id==='phname')S.phname=el.value.slice(0,14).replace(/[<>&"]/g,'');
   if(el.id==='gname')S.gname=el.value.slice(0,14).replace(/[<>&"]/g,'');
   if(el.id==='aka'||el.id==='motto'){var v0=el.value,wd=v0.split(/\s+/).filter(Boolean).length,mx=LIM[el.id][0],pv=el.dataset.pv,lv;
@@ -1940,6 +1991,7 @@ document.addEventListener('input',function(e){
   }
 });
 document.addEventListener('change',function(e){
+  if(e.target&&e.target.id==='am'){S.am=e.target.value;S.openH=null;arcRefresh();return}
   if(e.target&&e.target.id==='pdate'&&S.past){S.past.date=e.target.value;return}
   if(e.target&&(e.target.id==='pnameA'||e.target.id==='pnameB')&&S.past){var pn=cleanName(e.target.value);if(pn){S.past['name'+e.target.id.slice(5)]=pn;render()}else e.target.value=tn(S.past,e.target.id.slice(5));return}
   var t0=e.target;if(t0&&t0.id==='photo'&&t0.files&&t0.files[0]){var fl=t0.files[0];t0.value='';readPhoto(fl);return}
