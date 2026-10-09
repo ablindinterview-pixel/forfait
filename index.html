@@ -591,7 +591,7 @@ function lastCard(){
   h+='</div>';
   return h}
 function parts(c){return c&&c.teamA?c.teamA.concat(c.teamB||[]).filter(function(id){return P(id)&&!isPh(id)}):[]}
-function closedReg(c){return !!c&&!c.official&&c.date&&Date.now()>=dlTs(c.date)}
+function closedReg(c){return !!c&&!c.official&&c.date&&Date.now()>=regTs(c.date)}
 function votesSent(c){var mv=D.mvpv[UID];return !!(c&&mv&&mv.sent===c.id)}
 function voteCta(c){
   if(!c||!ended(c))return '';var pl=parts(c);if(pl.indexOf(UID)<0)return '';
@@ -603,11 +603,12 @@ function voteCta(c){
   if(!sent)h+='<button class="primary" data-a="govote" data-v="lvl">Voti '+dn+'/'+tg.length+'</button>';
   h+='</div></div>';
   return h}
+function regTs(iso){if(!iso)return 0;return new Date(iso+'T00:00:00').getTime()}
 function dlTs(iso){if(!iso)return 0;var d=new Date(iso+'T20:00:00');d.setDate(d.getDate()-2);return d.getTime()}
 function cdText(ts){var ms=ts-Date.now();if(ms<=0)return null;var t=Math.floor(ms/1000),dd=Math.floor(t/86400),hh=Math.floor(t%86400/3600),mm=Math.floor(t%3600/60),ss=t%60;function z(n){return n<10?'0'+n:''+n}return (dd?dd+(dd===1?' giorno ':' giorni ')+z(hh)+'h '+z(mm)+'m':z(hh)+':'+z(mm)+':'+z(ss))}
 function cdTick(){var e=document.getElementById('cd');if(!e)return;var ts=+e.dataset.ts,t=cdText(ts);e.classList.toggle('over',!t);e.classList.toggle('soon',!!t&&ts-Date.now()<3600000*3);e.querySelector('b').textContent=t||'Iscrizioni chiuse'}
 var lastEnd=null;setInterval(function(){cdTick();var e=ended();if(lastEnd!==null&&e!==lastEnd&&S.ready&&!S.dirty){var a=document.activeElement;if(!(a&&a.tagName==='INPUT'))render()}lastEnd=e},1000);
-function deadline(iso){if(!iso)return 'due giorni prima';var d=new Date(iso+'T12:00:00');d.setDate(d.getDate()-2);return d.toLocaleDateString('it-IT',{weekday:'long'})+' alle 20:00'}
+function deadline(iso){if(!iso)return 'il giorno prima';var d=new Date(iso+'T12:00:00');d.setDate(d.getDate()-1);return d.toLocaleDateString('it-IT',{weekday:'long'})+' a mezzanotte'}
 function isoOf(d){var m=d.getMonth()+1,x=d.getDate();return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(x<10?'0':'')+x}
 function nextTuesday(){var d=new Date();d.setDate(d.getDate()+1);while(d.getDay()!==2)d.setDate(d.getDate()+1);return isoOf(d)}
 function toast(m){var t=document.getElementById('toast');clearTimeout(toast.h);clearTimeout(toast.k);t.hidden=true;t.classList.remove('out');t.textContent=m;void t.offsetWidth;t.hidden=false;toast.h=setTimeout(function(){t.classList.add('out');toast.k=setTimeout(function(){t.hidden=true;t.classList.remove('out')},260)},2600)}
@@ -1027,9 +1028,9 @@ function vPartita(){
   var off=!!c.official,L=lineup(),y=yesIds(),Q=queueIds(),mine=rsvpOf(UID),st=stats();
   var m=allIds().filter(function(id){return rsvpOf(id)==='maybe'}),n=allIds().filter(function(id){return rsvpOf(id)==='no'});
   var shown=L.length,miss=need()-shown;
-  h+=stepBar(c)+'<h2>Prossima partita</h2><p class="sub">Rispondi entro '+esc(deadline(c.date))+'. '+(off?'La formazione è ufficiale: chi si ritira ora conta come forfait.':'Fino a due giorni prima puoi cambiare idea senza conseguenze: dopo, ritirarsi conta come forfait.')+'</p>';
+  h+=stepBar(c)+'<h2>Prossima partita</h2><p class="sub">Rispondi entro '+esc(deadline(c.date))+'. '+(off?'La formazione è ufficiale: chi si ritira ora conta come forfait.':'Puoi iscriverti fino al giorno prima. Da due giorni prima, se ti ritiri conta come forfait.')+'</p>';
   h+='<div class="panel"><div class="ticket"><div><div class="label">'+fmtName(c)+' · '+per()+' contro '+per()+'</div><div class="when">'+esc(dLabel(c.date))+'</div><div class="where">'+esc(c.time||'Orario da definire')+' · '+esc(c.field||'Campo da definire')+'</div></div></div>';
-  if(!off&&c.date)h+='<div class="cd" id="cd" data-ts="'+dlTs(c.date)+'"><span class="label">Iscrizioni aperte ancora</span><b>'+(cdText(dlTs(c.date))||'Iscrizioni chiuse')+'</b></div>';
+  if(!off&&c.date)h+='<div class="cd" id="cd" data-ts="'+regTs(c.date)+'"><span class="label">Iscrizioni aperte ancora</span><b>'+(cdText(regTs(c.date))||'Iscrizioni chiuse')+'</b></div>';
   h+=wxHtml(c);
   var mt=miss>0?'Mancano '+miss+' per partire':miss===0?'Numero completo'+(Q.length?' · '+Q.length+' in coda':''):(shown-need())+' in più: si gira a rotazione',fe=m.length+' forse · '+n.length+' no';
   h+=whoCard(c,L,shown,miss,mt,fe);
