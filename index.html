@@ -726,47 +726,71 @@ function drawLogo(x,x0,y0,sz){
 function mkImg(mid){
   var m=D.history.filter(function(x){return x._id===mid})[0];
   if(!m){toast('Partita non trovata');return}
-  var f=(document.fonts&&document.fonts.load)?Promise.all([document.fonts.load('700 40px "Chakra Petch"'),document.fonts.load('600 30px "Barlow Semi Condensed"')]).catch(function(){}):Promise.resolve();
-  f.then(function(){
-    var cw=1080,ch=1350,c=document.createElement('canvas');c.width=cw;c.height=ch;var x=c.getContext('2d');
+  var mp=P(m.mvp)||{},f=(document.fonts&&document.fonts.load)?Promise.all([document.fonts.load('700 40px "Chakra Petch"'),document.fonts.load('600 30px "Barlow Semi Condensed"')]).catch(function(){}):Promise.resolve();
+  var im=new Promise(function(res){if(!mp.photo)return res(null);var i=new Image();i.onload=function(){res(i)};i.onerror=function(){res(null)};i.src=mp.photo});
+  Promise.all([f,im]).then(function(r){
+    var ph=r[1],cw=1080,ch=1350,c=document.createElement('canvas');c.width=cw;c.height=ch;var x=c.getContext('2d');
     var D1='700 {s}px "Chakra Petch","Arial Narrow",sans-serif',B1='600 {s}px "Barlow Semi Condensed",Arial,sans-serif';
     function ft(t,s){return t.replace('{s}',s)}
-    var cA=tvis(tcol(m,'A')),cB=tvis(tcol(m,'B'));
-    x.fillStyle='#0b0f1a';x.fillRect(0,0,cw,ch);
-    x.strokeStyle='#2f3d66';x.lineWidth=6;x.strokeRect(30,30,cw-60,ch-60);
-    var tb=x.createLinearGradient(30,0,cw-30,0);tb.addColorStop(0,cA);tb.addColorStop(.5,'#ffe14a');tb.addColorStop(1,cB);x.fillStyle=tb;x.fillRect(30,30,cw-60,14);
-    x.textBaseline='alphabetic';x.textAlign='left';
-    drawLogo(x,76,50,96);x.fillStyle='#f2f5ff';x.font=ft(D1,60);x.textAlign='left';x.fillText('FORFAIT',190,124);
-    x.fillStyle='#8d9ac0';x.font=ft(B1,34);x.fillText((m.format==='calciotto'?'CALCIOTTO · ':'')+dLabel(m.date).toUpperCase(),80,204);
-    x.textAlign='center';
-    [['A',60,270],['B',560,810]].forEach(function(t){
-      x.fillStyle=tcol(m,t[0]);rr(x,t[1],236,460,86,43);x.strokeStyle='#f2f5ff';x.lineWidth=4;x.beginPath();if(x.roundRect)x.roundRect(t[1],236,460,86,43);else x.rect(t[1],236,460,86);x.stroke();
-      x.fillStyle=tcf(tcol(m,t[0]));x.font=ft(D1,46);x.fillText(tn(m,t[0]).toUpperCase(),t[2],298,420)});
-    x.font=ft(D1,210);
-    x.fillStyle=cA;x.fillText(''+(m.sa||0),340,500);
-    x.fillStyle=cB;x.fillText(''+(m.sb||0),740,500);x.shadowBlur=0;
-    x.fillStyle='#f2f5ff';x.fillText('–',540,490);
-    x.strokeStyle='#2f3d66';x.lineWidth=3;x.setLineDash([14,10]);x.beginPath();x.moveTo(80,540);x.lineTo(cw-80,540);x.stroke();x.setLineDash([]);
-    function col(ids,x0,clr){
-      var y=610;x.textAlign='left';
-      ids.filter(function(id){return P(id)}).slice(0,8).forEach(function(id){
-        x.fillStyle=clr;x.beginPath();x.arc(x0+12,y-12,10,0,7);x.fill();
-        x.fillStyle='#f2f5ff';x.font=ft(B1,40);x.fillText(pname(id),x0+40,y);
-        var g=(m.goals||{})[id]||0,as=(m.assists||{})[id]||0,tx=(g?g+' gol':'')+(g&&as?' · ':'')+(as?as+' ass.':'');if(tx){x.textAlign='right';x.fillStyle='#39ff88';x.font=ft(D1,as&&g?30:40);x.fillText(tx,x0+440,y);x.textAlign='left'}
-        y+=58;
-      });
+    var cA=tvis(tcol(m,'A')),cB=tvis(tcol(m,'B')),kA=tcol(m,'A'),kB=tcol(m,'B');
+    function poly(p){x.beginPath();x.moveTo(p[0][0],p[0][1]);for(var i=1;i<p.length;i++)x.lineTo(p[i][0],p[i][1]);x.closePath()}
+    // sfondo da studio televisivo
+    var g=x.createLinearGradient(0,0,0,ch);g.addColorStop(0,'#0c1426');g.addColorStop(1,'#05080f');x.fillStyle=g;x.fillRect(0,0,cw,ch);
+    x.save();x.globalAlpha=.30;x.fillStyle=cA;poly([[0,0],[520,0],[160,ch*0.62],[0,ch*0.62]]);x.fill();x.fillStyle=cB;poly([[cw,0],[cw-520,0],[cw-160,ch*0.62],[cw,ch*0.62]]);x.fill();x.restore();
+    x.save();x.globalAlpha=.07;x.strokeStyle='#fff';x.lineWidth=2;for(var q=-ch;q<cw+ch;q+=44){x.beginPath();x.moveTo(q,0);x.lineTo(q+ch,ch);x.stroke()}x.restore();
+    var vg=x.createRadialGradient(540,520,200,540,520,900);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');x.fillStyle=vg;x.fillRect(0,0,cw,ch);
+    // testata
+    drawLogo(x,50,36,92);x.textBaseline='alphabetic';x.textAlign='left';x.fillStyle='#f2f5ff';x.font=ft(D1,58);x.fillText('FORFAIT',156,104);
+    x.fillStyle='#ffe14a';poly([[700,48],[1040,48],[1010,120],[670,120]]);x.fill();
+    x.fillStyle='#0b0f1a';x.font=ft(D1,34);x.textAlign='center';x.fillText('RISULTATO FINALE',855,96,280);
+    x.fillStyle='#9fb0d8';x.font=ft(B1,30);x.textAlign='left';x.fillText((dLabel(m.date)||'').toUpperCase()+(m.format==='calciotto'?'  ·  CALCIOTTO':'  ·  CALCETTO'),56,172);
+    // tabellone
+    var y0=210,h0=290;
+    var ga=x.createLinearGradient(40,0,540,0);ga.addColorStop(0,kA);ga.addColorStop(1,shade(kA,-.35));x.fillStyle=ga;poly([[40,y0],[548,y0],[500,y0+h0],[40,y0+h0]]);x.fill();
+    var gb=x.createLinearGradient(1040,0,540,0);gb.addColorStop(0,kB);gb.addColorStop(1,shade(kB,-.35));x.fillStyle=gb;poly([[1040,y0],[532,y0],[580,y0+h0],[1040,y0+h0]]);x.fill();
+    x.strokeStyle='rgba(255,255,255,.85)';x.lineWidth=4;poly([[40,y0],[548,y0],[500,y0+h0],[40,y0+h0]]);x.stroke();poly([[1040,y0],[532,y0],[580,y0+h0],[1040,y0+h0]]);x.stroke();
+    x.textAlign='left';x.fillStyle=tcf(kA);x.font=ft(D1,50);x.fillText(tn(m,'A').toUpperCase(),76,y0+72,380);
+    x.textAlign='right';x.fillStyle=tcf(kB);x.fillText(tn(m,'B').toUpperCase(),1004,y0+72,380);
+    x.font=ft(D1,230);x.textAlign='right';x.fillStyle=tcf(kA);x.fillText(''+(m.sa||0),462,y0+265);
+    x.textAlign='left';x.fillStyle=tcf(kB);x.fillText(''+(m.sb||0),618,y0+265);
+    x.fillStyle='#ffe14a';rr(x,490,y0+h0/2-34,100,68,16);x.fillStyle='#0b0f1a';x.font=ft(D1,40);x.textAlign='center';x.fillText('FT',540,y0+h0/2+14);
+    // marcatori
+    var sy=540,sc=Object.keys(m.goals||{}).filter(function(k){return m.goals[k]>0}).sort(function(a,b){return m.goals[b]-m.goals[a]}).map(function(k){return pname(k)+(m.goals[k]>1?' ×'+m.goals[k]:'')});
+    x.fillStyle='rgba(255,255,255,.10)';poly([[40,sy],[1040,sy],[1040,sy+84],[40,sy+84]]);x.fill();
+    x.fillStyle='#39ff88';poly([[40,sy],[270,sy],[240,sy+84],[40,sy+84]]);x.fill();
+    x.fillStyle='#06210f';x.font=ft(D1,34);x.textAlign='left';x.fillText('⚽ GOL',66,sy+55);
+    x.fillStyle='#f2f5ff';x.font=ft(B1,36);x.fillText(sc.length?sc.join('   ·   '):'Nessun marcatore',296,sy+54,730);
+    // formazioni
+    var nmax=Math.max(1,Math.min(8,Math.max((m.teamA||[]).length,(m.teamB||[]).length))),rh=Math.min(72,Math.floor(396/nmax));
+    function col(ids,x0,w,k,kc){
+      var yy=660;x.fillStyle=k;poly([[x0,yy],[x0+w,yy],[x0+w,yy+56],[x0,yy+56]]);x.fill();
+      x.fillStyle=tcf(k);x.font=ft(D1,32);x.textAlign='left';x.fillText('FORMAZIONE · '+tn(m,x0<500?'A':'B').toUpperCase(),x0+18,yy+39,w-30);
+      yy+=56;
+      ids.filter(function(id){return P(id)||isG(id)||true}).slice(0,8).forEach(function(id,i){
+        x.fillStyle=i%2?'rgba(255,255,255,.04)':'rgba(255,255,255,.10)';x.fillRect(x0,yy,w,rh);
+        x.fillStyle=kc;x.fillRect(x0,yy,6,rh);
+        x.fillStyle='#f2f5ff';x.font=ft(B1,34);x.textAlign='left';x.fillText(pname(id),x0+22,yy+rh/2+12,w-170);
+        var g2=(m.goals||{})[id]||0,as=(m.assists||{})[id]||0,tx=(g2?g2+'⚽':'')+(g2&&as?'  ':'')+(as?as+' ass':'');if(tx){x.textAlign='right';x.fillStyle='#39ff88';x.font=ft(D1,28);x.fillText(tx,x0+w-14,yy+rh/2+10);x.textAlign='left'}
+        yy+=rh});
     }
-    col(m.teamA||[],70,tvis(tcol(m,'A')));col(m.teamB||[],570,tvis(tcol(m,'B')));
-    x.strokeStyle='#ffe14a';x.lineWidth=5;x.strokeRect(80,1090,cw-160,170);
-    x.textAlign='center';x.fillStyle='#ffe14a';x.font=ft(B1,36);x.fillText('MVP DELLA PARTITA',540,1148);
-    x.fillStyle='#f2f5ff';x.font=ft(D1,80);x.fillText(pname(m.mvp),540,1232);
-    x.fillStyle='#8d9ac0';x.font=ft(B1,30);x.fillText('IL CALCETTO DEL MARTEDÌ',540,1306);
+    col(m.teamA||[],40,490,kA,cA);col(m.teamB||[],550,490,kB,cB);
+    // MVP
+    var my=1138,mh=150,gm=x.createLinearGradient(40,0,1040,0);gm.addColorStop(0,'#ffe14a');gm.addColorStop(1,'#ff9f1c');x.fillStyle=gm;poly([[40,my],[1040,my],[1010,my+mh],[40,my+mh]]);x.fill();
+    var cx=130,cy=my+mh/2;x.save();x.beginPath();x.arc(cx,cy,56,0,7);x.closePath();x.clip();
+    if(ph){var sz=Math.min(ph.width,ph.height);x.drawImage(ph,(ph.width-sz)/2,(ph.height-sz)/2,sz,sz,cx-56,cy-56,112,112)}
+    else{x.fillStyle=mp.color||'#8d9ac0';x.fillRect(cx-56,cy-56,112,112);x.fillStyle='#07101f';x.font=ft(D1,64);x.textAlign='center';x.fillText((pname(m.mvp)||'?').charAt(0).toUpperCase(),cx,cy+22)}
+    x.restore();x.strokeStyle='#0b0f1a';x.lineWidth=6;x.beginPath();x.arc(cx,cy,56,0,7);x.stroke();
+    x.textAlign='left';x.fillStyle='#0b0f1a';x.font=ft(B1,32);x.fillText('★ MVP DELLA PARTITA',214,my+52);
+    x.font=ft(D1,76);x.fillText((pname(m.mvp)||'').toUpperCase(),214,my+122,780);
+    // piè
+    x.fillStyle='#9fb0d8';x.font=ft(B1,28);x.textAlign='center';x.fillText('FORFAIT  ·  IL CALCETTO DEL MARTEDÌ',540,1330);
     S.img=c.toDataURL('image/png');S.imgName='forfait-'+(m.date||'partita')+'.png';
     render();window.scrollTo(0,0);
     fxOn({run:function(){}});
     var p=$1('#screen .panel');if(p)reveal(p);
   });
 }
+function shade(h,k){var n=parseInt(h.slice(1),16),r=n>>16,g=(n>>8)&255,b=n&255;function f(v){return Math.max(0,Math.min(255,Math.round(k<0?v*(1+k):v+(255-v)*k)))}return 'rgb('+f(r)+','+f(g)+','+f(b)+')'}
 function saveImg(){
   if(!S.img)return;
   function hint(){toast('Tieni premuta l\'immagine per salvarla')}
