@@ -155,6 +155,10 @@ button:focus-visible{outline:3px dashed var(--ink);outline-offset:3px}
 .votecta{margin:0 0 10px;padding:10px 12px;display:flex;align-items:center;gap:10px;border:var(--bw) solid var(--bc);border-radius:calc(var(--rk) * 16px);background:var(--yellow);color:var(--on-acc);box-shadow:var(--so) var(--so) 0 var(--shadow);animation:vcp 2s ease-in-out infinite}
 .votecta .vct{flex:1;min-width:0}.votecta .label{color:inherit;opacity:.8;margin:0;font-size:10px}.votecta b{display:block;font:400 19px/1.1 var(--display);text-transform:uppercase;margin:2px 0 0;white-space:nowrap}
 .votecta .vcb{display:flex;gap:6px;flex:none}.votecta .primary{background:var(--surface);color:var(--ink);width:auto;padding:9px 12px;font-size:13px;margin:0}
+.lastm .lmvp{display:inline-block;margin-top:6px;padding:3px 10px;border-radius:99px;background:var(--yellow);color:var(--on-acc);font-size:12px;font-weight:800;border:var(--bw) solid var(--bc)}
+.lastm .lchev{width:34px;height:34px;border-radius:50%;background:var(--green);color:var(--on-acc);display:grid;place-items:center;font-size:22px;flex:none;animation:lnudge 1.8s ease-in-out infinite}
+@keyframes lnudge{50%{transform:translateX(4px)}}@media (prefers-reduced-motion:reduce){.lastm .lchev{animation:none}}
+.sentb{border-color:var(--green)!important}.sentb .ok{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--green);color:var(--on-acc);font-size:12px;margin-right:6px}
 .lastm .lres{display:block;font:400 18px/1.2 var(--display);text-transform:uppercase;margin-top:2px}.lastm{padding-top:12px;padding-bottom:12px}
 @keyframes vcp{50%{box-shadow:var(--so) var(--so) 0 var(--shadow),0 0 0 6px rgba(255,225,74,.35)}}@media (prefers-reduced-motion:reduce){.votecta{animation:none}}
 select{font:inherit;font-weight:700;color:var(--ink);background:var(--surface);border:var(--bw) solid var(--bc);border-radius:10px;padding:6px 8px;max-width:48%}
@@ -538,18 +542,23 @@ function vMatch(){var c=D.cur;if(c&&(c.status==='closed'||ended(c)))return c;ret
 function lastCard(){
   var l=D.last,c=D.cur;if(!l||!c||c.status==='closed'||ended(c))return '';
   var op=!!(S.acc&&S.acc.last);
-  var h='<div class="panel lastm acc'+(op?' open':'')+'"><button class="acch" data-a="acc" data-v="last" aria-expanded="'+op+'"><span style="min-width:0"><span class="label" style="display:block;margin:0">Appena giocata · '+esc(dShort(l.date))+'</span><span class="lres">'+esc(tn(l,'A'))+' '+(l.sa||0)+' – '+(l.sb||0)+' '+esc(tn(l,'B'))+'</span></span><span class="chev">›</span></button>';
+  var ca=tcol(l,'A'),cb=tcol(l,'B');
+  var h='<div class="panel lastm acc'+(op?' open':'')+'" style="background-image:linear-gradient(100deg,'+ca+'55 0%,rgba(0,0,0,0) 38%,rgba(0,0,0,0) 62%,'+cb+'55 100%)"><button class="acch" data-a="acc" data-v="last" aria-expanded="'+op+'"><span style="min-width:0"><span class="label" style="display:block;margin:0">🏆 Appena giocata · '+esc(dShort(l.date))+'</span><span class="lres">'+esc(tn(l,'A'))+' '+(l.sa||0)+' – '+(l.sb||0)+' '+esc(tn(l,'B'))+'</span>'+(l.mvp?'<span class="lmvp">⭐ MVP '+esc(pname(l.mvp))+'</span>':'')+'</span><span class="chev lchev">›</span></button>';
   if(op)h+='<div class="note" style="margin:4px 0 8px">MVP: <b>'+esc(pname(l.mvp))+'</b></div><button class="ghost" data-a="img" data-id="'+esc(l.id)+'">Riepilogo da condividere</button><button class="ghost" data-a="tab" data-v="pagella">Vai alla Pagella</button>';
   h+='</div>';
   return h}
 function parts(c){return c&&c.teamA?c.teamA.concat(c.teamB||[]).filter(function(id){return P(id)&&!isPh(id)}):[]}
 function closedReg(c){return !!c&&!c.official&&c.date&&Date.now()>=dlTs(c.date)}
+function votesSent(c){var mv=D.mvpv[UID];return !!(c&&mv&&mv.sent===c.id)}
 function voteCta(c){
   if(!c||!ended(c))return '';var pl=parts(c);if(pl.indexOf(UID)<0)return '';
   var tg=pl.filter(function(id){return id!==UID&&!isG(id)}),dn=tg.filter(function(id){return typeof (D.levels[id]||{})['r_'+UID]==='number'}).length,mv=D.mvpv[UID],mvd=mv&&mv.matchId===c.id&&mv.for;
-  var h='<div class="votecta"><div class="vct"><span class="label">La partita è finita</span><b>Vota i compagni</b></div><div class="vcb">';
-  if(c.status!=='closed')h+='<button class="primary" data-a="govote" data-v="mvp">'+(mvd?'✓ MVP':'MVP')+'</button>';
-  h+='<button class="primary" data-a="govote" data-v="lvl">Voti '+dn+'/'+tg.length+'</button></div></div>';
+  var sent=votesSent(c),needM=c.status!=='closed'&&!mvd;
+  if(sent&&!needM)return '';
+  var h='<div class="votecta"><div class="vct"><span class="label">La partita è finita</span><b>'+(sent?'Vota l\'MVP':'Vota i compagni')+'</b></div><div class="vcb">';
+  if(needM)h+='<button class="primary" data-a="govote" data-v="mvp">MVP</button>';
+  if(!sent)h+='<button class="primary" data-a="govote" data-v="lvl">Voti '+dn+'/'+tg.length+'</button>';
+  h+='</div></div>';
   return h}
 function dlTs(iso){if(!iso)return 0;var d=new Date(iso+'T20:00:00');d.setDate(d.getDate()-1);return d.getTime()}
 function cdText(ts){var ms=ts-Date.now();if(ms<=0)return null;var t=Math.floor(ms/1000),dd=Math.floor(t/86400),hh=Math.floor(t%86400/3600),mm=Math.floor(t%3600/60),ss=t%60;function z(n){return n<10?'0'+n:''+n}return (dd?dd+(dd===1?' giorno ':' giorni ')+z(hh)+'h '+z(mm)+'m':z(hh)+':'+z(mm)+':'+z(ss))}
@@ -1015,8 +1024,9 @@ function ratingBlock(c){
   var h='';
   var rOpen=ended(c);
   if(!rOpen)h+='<p class="note" style="margin-top:14px">I voti ai giocatori si aprono a fine partita, '+esc(endLabel(c))+'.</p>';
+  else if(votesSent(c)&&!S.vedit)h+='<button class="ghost sentb" data-a="rating"><span class="ok">✓</span> Voti inviati · Modifica</button>';
   else h+='<button class="ghost" data-a="rating">'+(S.rating?'Chiudi i voti':'Dai i tuoi voti ai giocatori')+'</button>';
-  if(S.rating&&rOpen){
+  if(S.rating&&rOpen&&(!votesSent(c)||S.vedit)){
     h+='<div class="panel" style="margin-top:12px"><div class="label">I tuoi voti · da 1 a 5</div><p class="note" style="margin:4px 0 6px">Nell\'app si vede solo la media del gruppo. Il livello di chi non ha voti vale 3.</p>';
     var any=false;
     (parts(c).indexOf(UID)<0?[]:parts(c)).forEach(function(id){
@@ -1027,6 +1037,8 @@ function ratingBlock(c){
       h+='</div></div>';
     });
     if(!any)h+='<div class="empty">'+(parts(c).indexOf(UID)<0?'Votano solo i giocatori che hanno partecipato alla partita.':'Non ci sono altri giocatori da votare.')+'</div>';
+    if(any){var tgs=parts(c).filter(function(id){return id!==UID&&!isG(id)}),dn2=tgs.filter(function(id){return typeof (D.levels[id]||{})['r_'+UID]==='number'}).length,sn=votesSent(c);
+      h+='<button class="primary" data-a="vsend" style="margin-top:12px"'+(dn2?'':' disabled')+'>'+(sn?'Aggiorna i voti inviati':'Invia i voti')+' · '+dn2+'/'+tgs.length+'</button><p class="note" style="margin-top:6px">'+(sn?'Hai già inviato i voti: le modifiche valgono finché non si gioca la prossima partita.':'Puoi inviarli anche a metà: potrai modificarli fino alla prossima partita.')+'</p>'}
     h+='</div>';
   }
   return h;
@@ -1515,7 +1527,12 @@ document.addEventListener('click',function(e){
       pop($1('.balance b'),1.3);flash($1('.balance'),tok('--green'));
     }});
     genTeams()}
-  else if(a==='rating'){S.rating=!S.rating;if(S.rating)fxOn({run:function(){var b=$1('[data-a="rating"]');if(b&&b.nextElementSibling){reveal(b.nextElementSibling);cascade(qa('.rate button'),12,8)}}})}
+  else if(a==='vsend'){
+    var vm=vMatch();if(!vm||!ended(vm)||parts(vm).indexOf(UID)<0)return;
+    var cv2=D.mvpv[UID],was=votesSent(vm);
+    (cv2&&cv2.matchId===vm.id?upd('mvpvotes/'+UID,{sent:vm.id}):setDoc('mvpvotes/'+UID,{matchId:vm.id,sent:vm.id}));
+    S.rating=false;S.vedit=false;toast(was?'Voti aggiornati':'Voti inviati');window.scrollTo(0,0)}
+  else if(a==='rating'){var vm3=vMatch();if(vm3&&votesSent(vm3)&&!S.vedit){S.vedit=true;S.rating=true}else{S.rating=!S.rating;S.vedit=false}if(S.rating)fxOn({run:function(){var b=$1('[data-a="rating"]');if(b&&b.nextElementSibling){reveal(b.nextElementSibling);cascade(qa('.rate button'),12,8)}}})}
   else if(a==='vote'){vote(id,+v)}
   else if(a==='sc'){var tt=el.dataset.t;S.res[tt]=Math.max(0,S.res[tt]+d);fxOn({run:function(){var b=$1('[data-big="'+tt+'"]');pop(b,d>0?1.6:.7);flash(b,tok(d>0?'--green':'--pink'))}})}
   else if(a==='goal'){var g0=S.res.goals[id]||0,g1=Math.max(0,g0+d),ch=g1-g0,tk=(S.res._A||[]).indexOf(id)>=0?'sa':(S.res._B||[]).indexOf(id)>=0?'sb':null;S.res.goals[id]=g1;if(ch&&tk)S.res[tk]=Math.max(0,S.res[tk]+ch);fxOn({run:function(){var b=$1('[data-gout="'+id+'"]');pop(b,d>0?1.7:.75);flash(b&&b.closest('.row'),tok(d>0?'--green':'--pink'))}})}
@@ -1547,7 +1564,7 @@ document.addEventListener('click',function(e){
     if(!me()||pl.indexOf(UID)<0||pl.indexOf(id)<0||id===UID||cm.status==='closed')return;
     var cv=D.mvpv[UID],cu=cv&&cv.matchId===cm.id?cv.for:null,nv=cu===id?null:id;
     if(nv)fxOn({ok:function(){var x=D.mvpv[UID];return x&&x.matchId===cm.id&&x.for===nv},run:function(){var b=$1('[data-a="vmvp"][data-id="'+nv+'"]');pop(b,1.25);ring(b,tok('--yellow'))}});
-    setDoc('mvpvotes/'+UID,{matchId:cm.id,for:nv});
+    setDoc('mvpvotes/'+UID,{matchId:cm.id,for:nv,sent:(cv&&cv.sent===cm.id?cm.id:'')});
   }
   else if(a==='fmt'){
     if(!ADMIN)return;
