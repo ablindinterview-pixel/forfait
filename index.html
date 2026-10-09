@@ -1399,23 +1399,23 @@ function trophyData(id){
   }
   var pr=0;ex.pairs.forEach(function(p){if((p.a===id||p.b===id)&&p.n>pr)pr=p.n});
   var F=[
-   ['🏟️','Presenze','partite giocate',s.pl,[1,5,10,25,50]],
-   ['⚽','Gol','gol segnati',s.g,[1,10,25,50,100]],
-   ['🎯','Assist','assist',s.a,[1,8,20,40,75]],
-   ['🧬','Decisivo','gol + assist',s.g+s.a,[5,15,35,70,120]],
-   ['🥅','A segno','partite con almeno un gol',hit,[1,5,10,20,35]],
-   ['🎩','Gol in una partita','gol in una sola partita',mx,[2,3,4,5,6]],
-   ['🪄','Uomo ovunque','partite con gol e assist',both,[1,3,6,10,15]],
-   ['👟','Capocannoniere','partite da miglior marcatore',top,[1,3,6,10,15]],
-   ['👑','MVP','premi MVP',s.mvp,[1,3,6,10,20]],
-   ['🏆','Vittorie','partite vinte',wins,[3,10,20,40,75]],
-   ['📈','Serie vincente','vittorie di fila',wbest,[2,3,4,5,7]],
-   ['💪','Goleada','vittorie con 3+ gol di scarto',big,[1,3,6,10,15]],
-   ['🚀','Attacco','gol di squadra con te in campo',tg,[10,30,60,100,200]],
-   ['🧱','Porta inviolata','partite senza subire gol',cs,[1,3,6,10,15]],
-   ['🔥','Fedelissimo','presenze di fila',best,[3,5,8,12,20]],
-   ['🤝','Inseparabili','partite con lo stesso compagno',pr,[3,5,8,12,20]],
-   ['🛡️','Zero forfait','partite senza forfait',nf===0?s.pl:0,[5,10,20,35,50]]
+   ['🏟️','Presenze','partite giocate',s.pl,[3,15,40,90,180]],
+   ['⚽','Gol','gol segnati',s.g,[5,25,60,120,250]],
+   ['🎯','Assist','assist',s.a,[5,20,50,100,200]],
+   ['🧬','Decisivo','gol + assist',s.g+s.a,[15,45,100,200,400]],
+   ['🥅','A segno','partite con almeno un gol',hit,[3,12,30,60,110]],
+   ['🎩','Gol in una partita','gol in una sola partita',mx,[3,4,5,7,9]],
+   ['🪄','Uomo ovunque','partite con gol e assist',both,[3,8,16,30,50]],
+   ['👟','Capocannoniere','partite da miglior marcatore',top,[3,8,16,30,50]],
+   ['👑','MVP','premi MVP',s.mvp,[2,6,14,28,50]],
+   ['🏆','Vittorie','partite vinte',wins,[8,25,55,100,180]],
+   ['📈','Serie vincente','vittorie di fila',wbest,[3,4,6,8,11]],
+   ['💪','Goleada','vittorie con 3+ gol di scarto',big,[3,8,16,28,45]],
+   ['🚀','Attacco','gol di squadra con te in campo',tg,[30,90,200,400,800]],
+   ['🧱','Porta inviolata','partite senza subire gol',cs,[3,8,16,28,45]],
+   ['🔥','Fedelissimo','presenze di fila',best,[5,10,16,26,40]],
+   ['🤝','Inseparabili','partite con lo stesso compagno',pr,[5,10,18,30,50]],
+   ['🛡️','Zero forfait','partite senza forfait',nf===0?s.pl:0,[10,25,50,90,150]]
   ];
   return F.map(function(f){var lv=0;while(lv<5&&f[3]>=f[4][lv])lv++;return {ico:f[0],name:f[1],unit:f[2],val:f[3],th:f[4],lv:lv}});
 }
