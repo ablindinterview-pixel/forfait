@@ -1869,7 +1869,7 @@ function mkMatch(){if(!ADMIN){toast('Solo l\'admin può farlo');return}
 document.addEventListener('click',function(e){
   var el=e.target.closest('[data-a]');if(!el)return;
   var a=el.dataset.a,v=el.dataset.v,id=el.dataset.id,d=+el.dataset.d,m=me()||S.draft;
-  if(a==='tab'){S.tab=v;S.img=null;window.scrollTo(0,0)}
+  if(a==='tab'){S.tab=v;S.img=null;S.pmenu=false;window.scrollTo(0,0)}
   else if(a==='toarc'){if(!ADMIN)return;S.tab='pagella';S.sub='albo';S.openH=null;S.img=null;window.scrollTo(0,0)}
   else if(a==='rsvp'){rsvp(v)}
   else if(a==='fno'){closeSure();return}
@@ -2036,11 +2036,14 @@ document.addEventListener('click',function(e){
     if(!ADMIN)return;var dv=($1('#edate')||{}).value,na=cleanName(($1('#enameA')||{}).value||''),nb=cleanName(($1('#enameB')||{}).value||'');
     if(!dv){toast('Inserisci la data');return}
     var o={date:dv};if(na)o.nameA=na;if(nb)o.nameB=nb;if(S.aec){o.colorA=S.aec.colorA;o.colorB=S.aec.colorB}
-    upd('history/'+id,o).then(function(){S.aed=null;S.aen=null;S.aec=null;toast('Partita aggiornata');render()})}
+    var ps=[upd('history/'+id,o)];
+    if(D.last&&D.last.id===id){var lo={date:dv};if(na)lo.nameA=na;if(nb)lo.nameB=nb;if(S.aec){lo.colorA=S.aec.colorA;lo.colorB=S.aec.colorB}ps.push(upd('matches/last',lo))}
+    Promise.all(ps).then(function(){S.aed=null;S.aen=null;S.aec=null;toast('Partita aggiornata');render()})}
   else if(a==='adel'){
     if(!ADMIN)return;
     if(S.adelAsk!==id){S.adelAsk=id;render();setTimeout(function(){if(S.adelAsk===id){S.adelAsk=null;render()}},4000);return}
-    S.adelAsk=null;S.openH=null;del('history/'+id).then(function(){toast('Partita eliminata');render()})}
+    S.adelAsk=null;S.openH=null;var dps=[del('history/'+id)];if(D.last&&D.last.id===id)dps.push(del('matches/last'));
+    Promise.all(dps).then(function(){toast('Partita eliminata');render()})}
   else if(a==='hist'){S.openH=S.openH===id?null:id;if(S.openH===id)fxOn({run:function(){reveal($1('.hdet'))}})}
   else if(a==='img'){mkImg(id);return}
   else if(a==='imgx'){S.img=null}
