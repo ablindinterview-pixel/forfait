@@ -1044,7 +1044,7 @@ function vSquadre(){
     var q=diff<0.15?'Molto equilibrate':diff<0.35?'Equilibrate':'Poco equilibrate';
     h+='<div class="balance"><b>'+q+'</b><span class="label">scarto di livello '+diff.toFixed(2)+'</span></div><div class="teams">'+teamHtml(A,esc(tn(c,'A')),tcol(c,'A'),tcf(tcol(c,'A')))+teamHtml(B,esc(tn(c,'B')),tcol(c,'B'),tcf(tcol(c,'B')))+'</div>';
     if(ADMIN)h+='<div class="panel" style="margin-top:14px"><div class="label">Nomi e colori delle squadre</div><label class="field" for="nameA" style="margin-top:8px"><span class="label">Prima squadra</span><input id="nameA" maxlength="20" value="'+esc(tn(c,'A'))+'" autocomplete="off"></label>'+tsw('A',c)+'<label class="field" for="nameB"><span class="label">Seconda squadra</span><input id="nameB" maxlength="20" value="'+esc(tn(c,'B'))+'" autocomplete="off"></label>'+tsw('B',c)+'</div>';
-    h+='<p class="note">Il sorteggio bilancia livello e ruoli, così ogni squadra ha porta, difesa, laterale e attacco quando possibile.'+(ADMIN?' Per scambiare due giocatori toccane uno di una squadra e uno dell\'altra.':'')+'</p>'+(ADMIN?'<button class="primary" style="margin-top:14px" data-a="regen">Rigenera squadre</button>':'');
+    h+='<p class="note">Il sorteggio bilancia livello e ruoli, così ogni squadra ha porta, difesa, laterale e attacco quando possibile.'+(ADMIN?' Per scambiare due giocatori toccane uno di una squadra e uno dell\'altra.':'')+'</p>'+(ADMIN?'<button class="primary" style="margin-top:14px" data-a="regen">Rigenera squadre</button><button class="ghost" data-a="unteams">'+(S.undoAsk?'Sicuro? Tocca di nuovo per annullare':'Annulla squadre')+'</button>':'');
     h+='<button class="ghost" data-a="why">'+(S.why?'Nascondi la spiegazione':'Perché questa divisione?')+'</button>'+(S.why?whyHtml(A,B):'');
   }
   h+=ratingBlock(vMatch()||c);
@@ -1652,6 +1652,10 @@ document.addEventListener('click',function(e){
   else if(a==='reopen'){S.confirmRe=true;fxOn({run:function(){reveal($1('.panel .banner'))}})}
   else if(a==='reopenno'){S.confirmRe=false}
   else if(a==='reopenyes'){S.confirmRe=false;upd('matches/current',{official:null}).then(function(){toast('Formazione riaperta')})}
+  else if(a==='unteams'){
+    if(!ADMIN||!D.cur)return;
+    if(!S.undoAsk){S.undoAsk=true;clearTimeout(S.undoT);S.undoT=setTimeout(function(){S.undoAsk=false;render()},4000)}
+    else{clearTimeout(S.undoT);S.undoAsk=false;S.pick=null;upd('matches/current',{teamA:[],teamB:[],diff:0,teamsKey:''});toast('Squadre annullate')}}
   else if(a==='pick'){
     if(!ADMIN)return;
     var cA=(D.cur.teamA||[]).slice(),cB=(D.cur.teamB||[]).slice();
