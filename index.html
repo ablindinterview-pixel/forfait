@@ -247,10 +247,15 @@ select{font:inherit;font-weight:700;color:var(--ink);background:var(--surface);b
 .arcbar input,.aedit input{width:100%;box-sizing:border-box;font:inherit;padding:10px 14px;border:var(--bw) solid var(--bc);border-radius:14px;background:var(--surface);color:inherit}
 .arcbar{margin-bottom:8px}.arcf{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;align-items:center}
 .arcf select{margin-left:auto;font:inherit;font-weight:800;font-size:14px;padding:5px 10px;border:var(--bw) solid var(--bc);border-radius:99px;background:var(--surface);color:inherit}
-.arm{margin:14px 0 2px;color:var(--muted)}.arc-n{font-size:12px;color:var(--muted);margin:2px 0 4px}
-.td{display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 6px;vertical-align:middle;border:2px solid var(--bc)}
+.arm{margin:10px 0 0;color:var(--muted)}.arc-n{font-size:12px;color:var(--muted);margin:2px 0 4px}
+.hrow{display:flex;align-items:center;gap:8px;padding:7px 0;cursor:pointer;min-height:36px}
+.hd{flex:none;width:44px;font:800 11px var(--body);letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.hres{flex:1;min-width:0;font:400 15px/1.1 var(--display);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}.hres b{font-weight:700;color:var(--green)}
+.hmv{flex:none;max-width:78px;font:700 11px var(--body);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hch{flex:none;color:var(--muted);font-size:20px;line-height:1;transition:transform .2s}.hist.open .hch{transform:rotate(90deg)}
+.td{display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 5px;vertical-align:middle;border:1.5px solid var(--bc)}
 .aedit{display:grid;gap:8px;margin:8px 0}.aedit label{display:grid;gap:3px;font-size:12px;font-weight:800;color:var(--muted)}
-.hist{padding:10px 0;border-top:2px dashed var(--soft)}
+.hist{padding:0;border-top:1px dashed var(--soft)}
 .hist:first-child{border-top:0}
 .hist .res{font:400 20px var(--display);text-transform:uppercase;font-variant-numeric:tabular-nums}
 nav{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:var(--bw) solid var(--bc);padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px))}
@@ -1324,7 +1329,7 @@ function arcList(){
     var k=arcMonthKey(m);
     if(k!==cur){cur=k;var d=m.date?new Date(m.date+'T12:00:00'):null;h+='<div class="label arm">'+(d?MESI[d.getMonth()]+' '+d.getFullYear():'Senza data')+'</div>'}
     var op=S.openH===m._id,sa=m.sa||0,sb=m.sb||0;
-    h+='<div class="hist"><div data-a="hist" data-id="'+esc(m._id)+'" role="button" tabindex="0" style="cursor:pointer"><div class="label">'+esc(dShort(m.date))+' · '+(m.format==='calciotto'?'calciotto · ':'')+(op?'chiudi':'dettagli')+'</div><div class="res"><i class="td" style="background:'+tcol(m,'A')+'"></i>'+esc(tn(m,'A'))+' '+sa+' – '+sb+' '+esc(tn(m,'B'))+'<i class="td" style="background:'+tcol(m,'B')+'"></i></div><div style="color:var(--muted)">MVP '+esc(pname(m.mvp))+'</div></div>'+(op?arcDet(m):'')+'</div>'});
+    h+='<div class="hist'+(op?' open':'')+'"><div class="hrow" data-a="hist" data-id="'+esc(m._id)+'" role="button" tabindex="0" aria-expanded="'+op+'"><span class="hd">'+esc(dShort(m.date))+'</span><span class="hres"><i class="td" style="background:'+tcol(m,'A')+'"></i>'+esc(tn(m,'A'))+' <b>'+sa+'–'+sb+'</b> '+esc(tn(m,'B'))+'<i class="td" style="background:'+tcol(m,'B')+'"></i></span>'+(m.mvp?'<span class="hmv">⭐ '+esc(pname(m.mvp))+'</span>':'')+'<span class="hch">›</span></div>'+(op?arcDet(m):'')+'</div>'});
   return h}
 function arcPanel(){
   var mons=[];D.history.forEach(function(m){var k=arcMonthKey(m);if(k&&mons.indexOf(k)<0)mons.push(k)});
