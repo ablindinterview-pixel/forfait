@@ -64,6 +64,8 @@ h2{font:400 30px/1 var(--display);text-transform:uppercase;margin:0 0 6px;text-w
 .gind,.grpb.solo{align-items:center}.gind{display:flex;align-items:center;gap:8px}
 .gtxt{font-size:13px;font-weight:800;color:var(--muted)}.gch{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--soft);font-size:13px;color:var(--ink);line-height:1;transition:none}.gch.o{transform:rotate(180deg)}
 .grpw{margin:0}
+.sure-e{font-size:56px;line-height:1;margin:6px 0 8px}
+#sure{position:fixed;inset:0;z-index:99;background:rgba(5,8,15,.86);display:grid;place-items:center;padding:20px;overflow:auto}
 #daily{position:fixed;inset:0;z-index:98;background:rgba(5,8,15,.82);display:grid;place-items:center;padding:20px;overflow:auto}
 .dcard{position:relative;width:100%;max-width:380px;background:var(--surface);border:var(--bw) solid var(--bc);border-radius:calc(var(--rk) * 24px);padding:22px 20px 16px;text-align:center;box-shadow:var(--so) var(--so) 0 var(--shadow);background-image:radial-gradient(circle at 50% 0,rgba(255,225,74,.18),rgba(0,0,0,0) 60%)}
 .dmore{margin-top:8px}
@@ -691,7 +693,7 @@ function helpBlock(){
   if(S.help)h+='<div class="panel help" style="margin-top:12px"><div class="label">Come funziona</div>'
    +'<p class="note"><b>Entrare.</b> Apri il link e crea il tuo profilo: nome, numero, ruoli e piede. Puoi cambiarli quando vuoi.</p>'
    +'<p class="note"><b>Rispondere.</b> Scegli "Ci sono", "Forse" o "Non ci sono". I primi 10 che dicono "Ci sono" (14 se si gioca a calciotto) sono in formazione, gli altri vanno in coda e entrano se si libera un posto.</p>'
-   +'<p class="note"><b>Formazione ufficiale.</b> La rende ufficiale l\'admin. Fino a quel momento puoi cambiare idea senza conseguenze. Dopo, chi si ritira conta come forfait e al suo posto entra il primo in coda.</p>'
+   +'<p class="note"><b>Formazione ufficiale.</b> La rende ufficiale l\'admin. Fino a due giorni prima della partita puoi cambiare idea senza conseguenze. Dopo, o a formazione ufficiale, chi si ritira conta come forfait e al suo posto entra il primo in coda.</p>'
    +'<p class="note"><b>Formato.</b> Si gioca a calcetto (5 contro 5) o a calciotto (7 contro 7): lo sceglie l\'admin.</p>'
    +'<p class="note"><b>Squadre.</b> Il sorteggio bilancia livello e ruoli. Il livello è la media dei voti da 1 a 5 che il gruppo dà ai giocatori, e di ogni giocatore si vede solo la media.</p>'
    +'<p class="note"><b>Risultato e Pagella.</b> Dopo la partita chi ha giocato vota l\'MVP, poi l\'admin inserisce punteggio, marcatori, assist e MVP. La Pagella raccoglie classifiche, serie, coppie e albo d\'oro della stagione.</p></div>';
@@ -1025,7 +1027,7 @@ function vPartita(){
   var off=!!c.official,L=lineup(),y=yesIds(),Q=queueIds(),mine=rsvpOf(UID),st=stats();
   var m=allIds().filter(function(id){return rsvpOf(id)==='maybe'}),n=allIds().filter(function(id){return rsvpOf(id)==='no'});
   var shown=L.length,miss=need()-shown;
-  h+=stepBar(c)+'<h2>Prossima partita</h2><p class="sub">Rispondi entro '+esc(deadline(c.date))+'. '+(off?'La formazione è ufficiale: chi si ritira ora conta come forfait.':'Finché la formazione non è ufficiale puoi cambiare idea senza conseguenze.')+'</p>';
+  h+=stepBar(c)+'<h2>Prossima partita</h2><p class="sub">Rispondi entro '+esc(deadline(c.date))+'. '+(off?'La formazione è ufficiale: chi si ritira ora conta come forfait.':'Fino a due giorni prima puoi cambiare idea senza conseguenze: dopo, ritirarsi conta come forfait.')+'</p>';
   h+='<div class="panel"><div class="ticket"><div><div class="label">'+fmtName(c)+' · '+per()+' contro '+per()+'</div><div class="when">'+esc(dLabel(c.date))+'</div><div class="where">'+esc(c.time||'Orario da definire')+' · '+esc(c.field||'Campo da definire')+'</div></div></div>';
   if(!off&&c.date)h+='<div class="cd" id="cd" data-ts="'+dlTs(c.date)+'"><span class="label">Iscrizioni aperte ancora</span><b>'+(cdText(dlTs(c.date))||'Iscrizioni chiuse')+'</b></div>';
   h+=wxHtml(c);
@@ -1758,16 +1760,36 @@ function readPhoto(file){
   im.onerror=function(){URL.revokeObjectURL(u);toast('Non riesco a leggere questa foto')};
   im.src=u}
 function setP(patch){if(me())upd('players/'+UID,patch);else{Object.keys(patch).forEach(function(k){S.draft[k]=patch[k]});render()}}
-function rsvp(v){
+function inFfWin(c){return !!c&&!!c.date&&Date.now()>=dlTs(c.date)}
+function rsvpCosts(v){var c=D.cur,q=D.rsvps[UID];if(!c||v==='yes')return false;
+  if(q&&q.matchId===curId()&&q.out)return false;
+  return !!((c.official&&isOff(UID))||(rsvpOf(UID)==='yes'&&inFfWin(c)))}
+function askForfeit(v){
+  if(document.getElementById('sure'))return;S.fv=v;
+  var o=document.createElement('div');o.id='sure';o.setAttribute('role','alertdialog');o.setAttribute('aria-label','Conferma ritiro');
+  o.innerHTML='<div class="dcard"><div class="label dl" style="color:var(--pink)">Ritiro da forfait</div><div class="sure-e">🤨</div><h3 class="dt">Sei proprio sicuro?</h3><p class="db">Mancano meno di due giorni alla partita: se ti ritiri adesso conta come <b>forfait</b> e finisce nella tua pagella. Il gruppo lo verrà a sapere e non te la farà passare liscia: ti prenderanno in giro, senza pietà.</p><button class="primary" data-a="fno">Ho cambiato idea, ci sono</button><button class="ghost dno" data-a="fok" style="color:var(--pink)">Sì, mi ritiro e accetto le conseguenze</button></div>';
+  document.body.appendChild(o);
+  if(typeof gsap!=='undefined'&&!calmFx()){
+    gsap.from(o,{opacity:0,duration:.25});
+    gsap.from(o.querySelector('.dcard'),{scale:.7,y:40,opacity:0,duration:.55,ease:'back.out(1.7)'});
+    gsap.fromTo(o.querySelector('.sure-e'),{scale:0,rotation:-25},{scale:1,rotation:0,duration:.6,delay:.2,ease:'elastic.out(1,.5)'});
+    gsap.from(o.querySelectorAll('.dt,.db'),{opacity:0,y:12,duration:.4,stagger:.1,delay:.25,ease:'power2.out'});
+    gsap.from(o.querySelectorAll('.primary,.dno'),{opacity:0,y:10,duration:.35,stagger:.08,delay:.55,ease:'power2.out'})}}
+function closeSure(){
+  var o=document.getElementById('sure');if(!o)return;
+  if(typeof gsap!=='undefined'&&!calmFx()){gsap.to(o.querySelector('.dcard'),{scale:.85,y:30,opacity:0,duration:.22,ease:'power2.in'});gsap.to(o,{opacity:0,duration:.25,delay:.08,onComplete:function(){if(o.parentNode)o.parentNode.removeChild(o)}})}
+  else if(o.parentNode)o.parentNode.removeChild(o)}
+function rsvp(v,sure){
   if(!me()||v===rsvpOf(UID))return;
+  if(!sure&&rsvpCosts(v)){askForfeit(v);return}
   if(!ADMIN&&v==='yes'&&closedReg(D.cur)){toast('Iscrizioni chiuse: chiedi all\'admin');return}
   var c=D.cur,q=D.rsvps[UID],rec={matchId:curId(),v:v};
   if(v==='yes')rec.at=Date.now();
   if(q&&q.matchId===curId()&&q.out)rec.out=true;
-  if(c&&c.official&&v!=='yes'&&!rec.out&&isOff(UID)){
+  if(rsvpCosts(v)){
     rec.out=true;
     upd('players/'+UID,{forfeits:(me().forfeits||0)+1});
-    toast('Ritiro registrato come forfait');
+    toast('Forfait registrato. Il gruppo ne sarà felicissimo');
   }
   var prev=Math.min(100,lineup().length/need()*100),col=tok(v==='yes'?'--green':v==='maybe'?'--yellow':'--pink');
   fxOn({ok:function(){return rsvpOf(UID)===v},run:function(){
@@ -1849,6 +1871,8 @@ document.addEventListener('click',function(e){
   if(a==='tab'){S.tab=v;S.img=null;window.scrollTo(0,0)}
   else if(a==='toarc'){if(!ADMIN)return;S.tab='pagella';S.sub='albo';S.openH=null;S.img=null;window.scrollTo(0,0)}
   else if(a==='rsvp'){rsvp(v)}
+  else if(a==='fno'){closeSure();return}
+  else if(a==='fok'){var fv=S.fv;closeSure();if(fv)rsvp(fv,true);return}
   else if(a==='regen'){
     var before=JSON.stringify((D.cur&&D.cur.teamA)||[]);
     fxOn({ok:function(){return JSON.stringify((D.cur&&D.cur.teamA)||[])!==before},run:function(){
