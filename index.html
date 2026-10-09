@@ -968,7 +968,7 @@ function mkAwImg(){
     x.fillStyle='#0b0f1a';x.fillRect(0,0,cw,ch);
     x.strokeStyle='#2f3d66';x.lineWidth=6;x.strokeRect(30,30,cw-60,ch-60);x.fillStyle='#39ff88';x.fillRect(30,30,cw-60,10);
     x.textAlign='left';drawLogo(x,76,50,96);x.fillStyle='#f2f5ff';x.font=ft(D1,60);x.textAlign='left';x.fillText('FORFAIT',190,124);
-    x.fillStyle='#8d9ac0';x.font=ft(B1,34);x.fillText('PREMI DI STAGIONE 2026/27',80,204);
+    x.fillStyle='#8d9ac0';x.font=ft(B1,34);x.fillText('PREMI DI STAGIONE 2027',80,204);
     var y=270,step=Math.min(130,Math.floor(1000/Math.max(1,list.length)));
     list.slice(0,8).forEach(function(a){
       x.fillStyle='#ffe14a';x.font=ft(B1,30);x.textAlign='left';x.fillText(a.l.toUpperCase(),80,y);
@@ -1278,7 +1278,7 @@ function recordsHtml(){
   return '<div class="awards">'+cards.join('')+'</div>';
 }
 function vPagella(){
-  var st=stats(),ids=allIds(),h=banner()+'<h2>Pagella</h2><p class="sub">Stagione 2026/27 · '+np(D.history.length,'partita giocata','partite giocate')+'</p>';
+  var st=stats(),ids=allIds(),h=banner()+'<h2>Pagella</h2><p class="sub">Stagione 2027 · '+np(D.history.length,'partita giocata','partite giocate')+'</p>';
   function top(key){var b=null;ids.forEach(function(id){if(st[id][key]>0&&(!b||st[id][key]>st[b][key]))b=id});return b}
   function aw(label,key,u1,u2){var b=top(key);return '<div class="award"><div class="label">'+label+'</div><div class="v">'+(b?esc(pname(b)):'—')+'</div><div class="d">'+(b?st[b][key]+' '+(st[b][key]===1?u1:u2):'nessun dato')+'</div></div>'}
   h+='<div class="awards">'+aw('Capocannoniere','g','gol','gol')+aw('MVP','mvp','premio','premi')+aw('Più presente','pl','partita','partite')+aw('Più forfait','fg','forfait','forfait')+'</div>';
