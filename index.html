@@ -1458,7 +1458,7 @@ function vProfilo(onb){
   var pmh='';
   if(S.pmenu){var mi=[];
     if(avHasPh(m)){mi.push(['pmphoto','📷','Cambia foto']);mi.push(['phdel','✕','Rimuovi foto','rm'])}else mi.push(['pmphoto','📷','Carica foto']);
-    pmh='<div id="pmenu">'+mi.map(function(o,i){var ang=(-40+i*(50/Math.max(1,mi.length-1)))*Math.PI/180,R=120,x=75+R*Math.cos(ang)-21,y=75+R*Math.sin(ang)-21,cur=o[0]==='avc'&&av===o[3];
+    pmh='<div id="pmenu">'+mi.map(function(o,i){var ang=(-12+(i-(mi.length-1)/2)*25)*Math.PI/180,R=120,x=75+R*Math.cos(ang)-21,y=75+R*Math.sin(ang)-21,cur=o[0]==='avc'&&av===o[3];
       return '<button class="pmi'+(cur?' on':'')+(o[3]==='rm'?' rm':'')+'" style="left:'+x.toFixed(1)+'px;top:'+y.toFixed(1)+'px" data-a="'+o[0]+'"'+(o[0]==='avc'?' data-v="'+o[3]+'"':'')+' aria-label="'+o[2]+'" title="'+o[2]+'">'+o[1]+'</button>'}).join('')+'</div>'}
   h+='<div class="pav"><div class="pavw">'+avHtml(UID,m,1)+'<button class="pcam'+(S.pmenu?' on':'')+'" data-a="pcam" aria-label="Opzioni avatar" aria-expanded="'+!!S.pmenu+'">📷</button>'+pmh+'</div><div class="pnm">'+esc(m.nick||'Il tuo nome')+(m.num?' <span class="pn">#'+esc(m.num)+'</span>':'')+'</div><div class="prl">'+esc((m.roles||[]).join(' · '))+(m.foot?' · piede '+esc(m.foot.toLowerCase()):'')+'</div>'+(m.motto?'<div class="pmt">“'+esc(m.motto)+'”</div>':'')+'</div>';
   h+='<input id="photo" type="file" accept="image/*" hidden>';
