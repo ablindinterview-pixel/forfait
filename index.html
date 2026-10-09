@@ -66,6 +66,8 @@ h2{font:400 30px/1 var(--display);text-transform:uppercase;margin:0 0 6px;text-w
 .grpw{margin:0}
 #daily{position:fixed;inset:0;z-index:98;background:rgba(5,8,15,.82);display:grid;place-items:center;padding:20px;overflow:auto}
 .dcard{position:relative;width:100%;max-width:380px;background:var(--surface);border:var(--bw) solid var(--bc);border-radius:calc(var(--rk) * 24px);padding:22px 20px 16px;text-align:center;box-shadow:var(--so) var(--so) 0 var(--shadow);background-image:radial-gradient(circle at 50% 0,rgba(255,225,74,.18),rgba(0,0,0,0) 60%)}
+.dmore{margin-top:8px}
+.dmore{margin-top:8px}
 .dcard .dl{margin:0 0 14px;color:var(--yellow)}.dav{position:relative;display:inline-block;margin-bottom:6px}.dav .avatar{width:96px;height:96px;font-size:40px}
 .dav .de{position:absolute;right:-18px;bottom:-6px;font-size:38px;line-height:1}
 .dt{font:400 26px/1.1 var(--display);text-transform:uppercase;margin:12px 0 8px}.db{font-size:16px;line-height:1.45;font-weight:600;margin:0 0 16px}
@@ -1565,9 +1567,9 @@ var STORIES=[
 ["🍰", "La torta di {m}", "{m} ha portato una torta per festeggiare. {n} ha mangiato tre fette e ha chiesto se fosse per l'MVP. Era per il compleanno di {m}. La seconda fetta è stata più lenta."]
 ];
 function hashStr(t){var h=2166136261;for(var i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
-function dailyStory(){
+function dailyStory(k){
   var ids=Object.keys(D.players).sort().filter(function(id){return !isPh(id)&&!isG(id)});if(!ids.length)return null;
-  var day=isoOf(new Date()),h=hashStr(day),id=ids[h%ids.length],p=P(id)||{},L=playerLog()[id]||{g:0,pl:0,mvp:0};
+  var day=isoOf(new Date()),h=hashStr(k?day+':'+k:day),id=ids[h%ids.length],p=P(id)||{},L=playerLog()[id]||{g:0,pl:0,mvp:0};
   var mid=ids.length>1?ids[(ids.indexOf(id)+1+((h>>>16)%(ids.length-1)))%ids.length]:id;
   var c={n:pname(id),m:pname(mid),aka:p.aka||'',num:(p.num!==''&&p.num!=null)?p.num:'',r:String(roles(id)[0]||'Laterale').toLowerCase(),g:L.g,pl:L.pl,mvp:L.mvp,fg:p.forfeits||L.fg||0},ok=[];
   STORIES.forEach(function(s){if(s[3]&&!c[s[3]])return;if(s[1].indexOf('{m}')>=0||s[2].indexOf('{m}')>=0){if(ids.length<2)return}ok.push(s)});
@@ -1575,9 +1577,9 @@ function dailyStory(){
   function fill(t){return t.replace(/\{(\w+)\}/g,function(_,k){return c[k]==null?'':c[k]})}
   return {id:id,e:st[0],t:fill(st[1]),b:fill(st[2]),day:day}}
 function showDaily(force){
-  var st=dailyStory();if(!st||document.getElementById('daily'))return;
+  S.dk=0;var st=dailyStory();if(!st||document.getElementById('daily'))return;
   var o=document.createElement('div');o.id='daily';o.setAttribute('role','dialog');o.setAttribute('aria-label','La storia del giorno');
-  o.innerHTML='<div class="dcard"><div class="label dl">La storia del giorno</div><div class="dav">'+avHtml(st.id,P(st.id),1).replace(/ data-pid="[^"]*"/,'')+'<span class="de">'+st.e+'</span></div><h3 class="dt">'+esc(st.t)+'</h3><p class="db">'+esc(st.b)+'</p><button class="primary" data-a="dclose">Che storia!</button><button class="ghost dno" data-a="doff">Non mostrarla più</button><small class="dn">Storia inventata: ogni riferimento a persone è puramente casuale. Forse.</small></div>';
+  o.innerHTML='<div class="dcard"><div class="label dl">La storia del giorno</div><div class="dav">'+avHtml(st.id,P(st.id),1).replace(/ data-pid="[^"]*"/,'')+'<span class="de">'+st.e+'</span></div><h3 class="dt">'+esc(st.t)+'</h3><p class="db">'+esc(st.b)+'</p><button class="primary" data-a="dclose">Che storia!</button><button class="ghost dmore" data-a="dmore">🎲 Un\'altra storia</button><button class="ghost dno" data-a="doff">Non mostrarla più</button><small class="dn">Storia inventata: ogni riferimento a persone è puramente casuale. Forse.</small></div>';
   document.body.appendChild(o);
   if(!calmFx()){
     gsap.from(o,{opacity:0,duration:.3});
@@ -1585,10 +1587,22 @@ function showDaily(force){
     gsap.from(o.querySelector('.dav'),{scale:0,rotation:-20,duration:.6,delay:.2,ease:'back.out(2.2)'});
     gsap.fromTo(o.querySelector('.de'),{scale:0},{scale:1,duration:.5,delay:.5,ease:'elastic.out(1,.5)'});
     gsap.from(o.querySelectorAll('.dl,.dt,.db'),{opacity:0,y:14,duration:.45,stagger:.12,delay:.3,ease:'power2.out'});
-    gsap.from(o.querySelectorAll('.primary,.dno,.dn'),{opacity:0,y:10,duration:.4,stagger:.08,delay:.8,ease:'power2.out'});
+    gsap.from(o.querySelectorAll('.primary,.dmore,.dno,.dn'),{opacity:0,y:10,duration:.4,stagger:.08,delay:.8,ease:'power2.out'});
   }
   try{if(!force)localStorage.setItem('fdaily',st.day)}catch(e){}
 }
+function moreDaily(){
+  var o=document.getElementById('daily');if(!o)return;S.dk=(S.dk||0)+1;var st=dailyStory(S.dk);if(!st)return;
+  function swap(){
+    o.querySelector('.dav').innerHTML=avHtml(st.id,P(st.id),1).replace(/ data-pid="[^"]*"/,'')+'<span class="de">'+st.e+'</span>';
+    o.querySelector('.dt').textContent=st.t;o.querySelector('.db').textContent=st.b;
+    if(!calmFx()){
+      gsap.fromTo(o.querySelector('.dav'),{scale:.3,rotation:-25},{scale:1,rotation:0,duration:.55,ease:'back.out(2)'});
+      gsap.fromTo(o.querySelector('.de'),{scale:0},{scale:1,duration:.5,delay:.2,ease:'elastic.out(1,.5)'});
+      gsap.fromTo(o.querySelectorAll('.dt,.db'),{opacity:0,y:16},{opacity:1,y:0,duration:.4,stagger:.1,delay:.1,ease:'power2.out'})}}
+  var bt=o.querySelector('.dmore');
+  if(!calmFx()){if(bt)gsap.fromTo(bt,{scale:.92},{scale:1,duration:.4,ease:'back.out(3)'});gsap.to(o.querySelectorAll('.dav,.dt,.db'),{opacity:0,y:-10,duration:.18,onComplete:swap})}
+  else swap()}
 function closeDaily(){
   var o=document.getElementById('daily');if(!o)return;
   if(!calmFx()){gsap.to(o.querySelector('.dcard'),{scale:.85,y:30,opacity:0,duration:.25,ease:'power2.in'});gsap.to(o,{opacity:0,duration:.3,delay:.1,onComplete:function(){o.remove()}})}
@@ -1882,6 +1896,7 @@ document.addEventListener('click',function(e){
       return setDoc('history/'+m._id,n)});
     Promise.all(ops).then(function(){return del('players/'+id)}).then(function(){toast(nm0+' collegato a '+nm1)})}
   else if(a==='dclose'){closeDaily();return}
+  else if(a==='dmore'){moreDaily();return}
   else if(a==='doff'){try{localStorage.setItem('fdailyoff','1')}catch(e){}closeDaily();toast('Non vedrai più le storie');return}
   else if(a==='dshow'){showDaily(true);return}
   else if(a==='lbx'){
