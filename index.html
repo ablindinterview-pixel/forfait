@@ -1331,7 +1331,7 @@ function grow(els){els.forEach(function(el,i){el.style.transformOrigin='left cen
 function enterFx(){
   if(calmFx())return;
   var sc=document.getElementById('screen');if(!sc)return;
-  var kids=Array.prototype.slice.call(sc.children);
+  var kids=Array.prototype.slice.call(sc.children).filter(function(e){return e.tagName!=='BUTTON'});
   gsap.from(kids,{opacity:0,y:18,duration:.5,stagger:.06,ease:'power3.out',clearProps:'opacity,transform'});
   var st=sc.querySelectorAll('.stp .sd');if(st.length)gsap.from(st,{scale:0,duration:.45,stagger:.08,delay:.15,ease:'back.out(2.2)',clearProps:'transform'});
   var sl=sc.querySelectorAll('.stp .sl.d');sl.forEach(function(e,i){gsap.from(e,{scaleX:0,transformOrigin:'left center',duration:.5,delay:.25+i*.15,ease:'power2.out',clearProps:'transform'})});
