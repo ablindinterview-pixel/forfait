@@ -138,6 +138,7 @@ button:focus-visible{outline:3px dashed var(--ink);outline-offset:3px}
 .pcg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.pcb{text-align:center;border:var(--bw) solid var(--bc);border-radius:10px;padding:6px 2px}
 .pcb b{display:block;font:400 20px var(--display);margin:0;text-transform:none}.pcb small{display:block;font-size:10px;color:var(--muted);font-weight:700;line-height:1.1;opacity:1}
 .pcf,.pct{display:flex;align-items:center;gap:6px;margin-top:10px;flex-wrap:wrap}.pcf small,.pct small{opacity:1;color:var(--muted);font-weight:700;font-size:11px;text-transform:uppercase;margin-right:4px}
+.ptr{margin-top:12px}.ptr small{color:var(--muted);font-weight:700;font-size:11px;text-transform:uppercase}.ptr svg{display:block;width:100%;height:auto;margin-top:4px}.ptn{font-size:13px;color:var(--muted);margin-top:4px}.ptl{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--muted);font-weight:700}.ptl i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px}
 .pcf i{font-style:normal;font-weight:800;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:12px;border:var(--bw) solid var(--bc)}
 .pcf .fV{background:var(--green);color:var(--on-acc)}.pcf .fP{background:var(--pink);color:var(--on-acc)}.pcf .fN{background:var(--soft)}
 .pct span{font-size:20px;width:34px;height:34px;display:grid;place-items:center;border-radius:50%;border:3px solid;font-family:"Apple Color Emoji","Segoe UI Emoji",sans-serif}
@@ -1740,6 +1741,20 @@ function render(){
 function changed(){S.ready=true;var a=document.activeElement;if(a&&a.tagName==='INPUT'&&document.getElementById('screen').contains(a)){S.dirty=true}else render()}
 
 /* azioni */
+function trendHtml(id){
+  var ms=[];D.history.slice().reverse().forEach(function(m){var ia=(m.teamA||[]).indexOf(id)>=0,ib=(m.teamB||[]).indexOf(id)>=0;if(!ia&&!ib)return;var my=ia?(m.sa||0):(m.sb||0),op=ia?(m.sb||0):(m.sa||0);ms.push({g:(m.goals&&m.goals[id])||0,a:(m.assists&&m.assists[id])||0,pt:my>op?3:my<op?0:1,r:my>op?'V':my<op?'P':'N',mvp:m.mvp===id})});
+  if(ms.length<2)return '<div class="ptr"><small>Andamento di stagione</small><div class="ptn">Servono almeno 2 partite per tracciare l\'andamento.</div></div>';
+  ms=ms.slice(-14);var n=ms.length,W=300,H=110,pl=6,pb=22,pt=8,iw=W-pl*2,ih=H-pb-pt,bw=Math.min(18,iw/n*.6),mx=Math.max(2,Math.max.apply(null,ms.map(function(m){return m.g+m.a})));
+  function X(i){return pl+iw*(i+.5)/n}
+  var bars='',dots='',pts=[];
+  ms.forEach(function(m,i){var x=X(i),hg=ih*m.g/mx,ha=ih*m.a/mx,y0=pt+ih;
+    if(m.g)bars+='<rect class="tb" x="'+(x-bw/2).toFixed(1)+'" y="'+(y0-hg).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+hg.toFixed(1)+'" rx="2" fill="var(--green)"/>';
+    if(m.a)bars+='<rect class="tb" x="'+(x-bw/2).toFixed(1)+'" y="'+(y0-hg-ha).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+ha.toFixed(1)+'" rx="2" fill="var(--blue)"/>';
+    var s=ms.slice(Math.max(0,i-2),i+1),f=s.reduce(function(t,q){return t+q.pt},0)/s.length;pts.push([x,pt+ih-ih*f/3]);
+    dots+='<text x="'+x.toFixed(1)+'" y="'+(H-7)+'" text-anchor="middle" font-size="9" font-weight="800" fill="'+(m.r==='V'?'var(--green)':m.r==='P'?'var(--pink)':'var(--muted)')+'">'+(m.mvp?'★':m.r)+'</text>'});
+  var d=pts.map(function(p,i){return (i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)}).join(' ');
+  var tg=ms.reduce(function(t,m){return t+m.g},0),ta=ms.reduce(function(t,m){return t+m.a},0);
+  return '<div class="ptr"><small>Andamento · ultime '+n+' partite</small><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Andamento: '+tg+' gol e '+ta+' assist nelle ultime '+n+' partite"><line x1="'+pl+'" x2="'+(W-pl)+'" y1="'+(pt+ih)+'" y2="'+(pt+ih)+'" stroke="var(--bc)" stroke-width="1" opacity=".5"/>'+bars+'<path class="tl" d="'+d+'" fill="none" stroke="var(--pink)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'+pts.map(function(p){return '<circle class="tp" cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.6" fill="var(--pink)"/>'}).join('')+dots+'</svg><div class="ptl"><span><i style="background:var(--green)"></i>gol</span><span><i style="background:var(--blue)"></i>assist</span><span><i style="background:var(--pink)"></i>forma</span><span>★ MVP</span></div></div>'}
 function playerCard(id){
   var p=P(id);if(!p||isG(id))return false;
   var L=playerLog()[id]||{pl:0,g:0,a:0,mvp:0,w:0,cs:0,og:0},ph=isPh(id);
@@ -1753,6 +1768,7 @@ function playerCard(id){
   h+='<div class="pcs"><div class="pcl">'+esc(rl.map(function(x,i){return i?x+' (secondario)':x+' (principale)'}).join(' · '))+(p.num!==''&&p.num!=null?' · maglia '+esc(p.num):'')+(p.foot?' · piede '+esc(p.foot.toLowerCase()):'')+'</div>';
   h+='<div class="pcg">'+box(L.pl,'partite')+box(L.w,'vittorie')+box(L.g,'gol')+box(L.a,'assist')+box(L.mvp,'MVP')+box(L.cs,'porta inviolata')+(L.og?box(L.og,'autogol'):'')+(ph?'':'<div class="pcb"><b>'+dots(lv.v)+'</b><small>livello</small></div>')+(ph?'':box(p.forfeits||0,'forfait'))+'</div>';
   if(form.length)h+='<div class="pcf"><small>Ultime partite</small>'+form.map(function(x){return '<i class="f'+x+'">'+x+'</i>'}).join('')+'</div>';
+  h+=trendHtml(id);
   if(tr.length)h+='<div class="pct"><small>Trofei</small>'+tr.map(function(t){return '<span title="'+esc(t.name+' · '+TIERS[t.lv-1][0])+'" style="border-color:'+TIERS[t.lv-1][1]+'">'+t.ico+'</span>'}).join('')+'</div>';
   h+='</div><button class="ghost mini">Chiudi</button></div>';
   o.innerHTML=h;
@@ -1760,6 +1776,9 @@ function playerCard(id){
   function kd(e){if(e.key==='Escape')close()}
   o.onclick=function(e){if(!e.target.closest('.pcs'))close()};document.addEventListener('keydown',kd);document.body.appendChild(o);
   try{A(o.querySelector('.lbc'),[{transform:'scale(.9)',opacity:0},{transform:'none',opacity:1}],{duration:220,easing:'cubic-bezier(.2,.9,.3,1)'})}catch(e){}
+  try{if(!calmFx()){var tl=o.querySelector('.tl');if(tl&&tl.getTotalLength){var Ln=tl.getTotalLength();gsap.fromTo(tl,{strokeDasharray:Ln,strokeDashoffset:Ln},{strokeDashoffset:0,duration:.9,delay:.25,ease:'power2.out',clearProps:'strokeDasharray,strokeDashoffset'})}
+    var br=o.querySelectorAll('.tb');if(br.length)gsap.from(br,{scaleY:0,transformOrigin:'50% 100%',duration:.5,delay:.2,stagger:.03,ease:'back.out(1.6)'});
+    var tp=o.querySelectorAll('.tp');if(tp.length)gsap.from(tp,{opacity:0,duration:.3,delay:.6,stagger:.04})}}catch(e){}
   return true}
 function showPhoto(id){
   var p=P(id);if(!p||p.avc!=='f'||!p.photo)return false;
