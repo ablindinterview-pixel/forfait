@@ -1294,7 +1294,7 @@ function arcDet(m){
   var h='<div class="hdet"><p class="note"><b>'+esc(tn(m,'A'))+':</b> '+esc((m.teamA||[]).map(pname).join(', ')||'—')+'</p><p class="note"><b>'+esc(tn(m,'B'))+':</b> '+esc((m.teamB||[]).map(pname).join(', ')||'—')+'</p><p class="note"><b>Marcatori:</b> '+(gl||'—')+'</p><p class="note"><b>Assist:</b> '+(as||'—')+'</p>'+(og?'<p class="note"><b>Autogol:</b> '+og+'</p>':'')+'<button class="ghost" data-a="img" data-id="'+esc(m._id)+'">Crea il riepilogo da condividere</button>';
   if(ADMIN){
     h+='<button class="ghost" data-a="editres" data-id="'+esc(m._id)+'">Correggi risultato, marcatori e MVP</button>';
-    if(S.aed===m._id)h+='<div class="aedit"><label>Data<input type="date" id="edate" value="'+esc(m.date||'')+'"></label><label>Nome squadra 1<input id="enameA" maxlength="14" value="'+esc(tn(m,'A'))+'"></label><label>Nome squadra 2<input id="enameB" maxlength="14" value="'+esc(tn(m,'B'))+'"></label><button class="primary" data-a="aesave" data-id="'+esc(m._id)+'">Salva le modifiche</button></div>';
+    if(S.aed===m._id)h+='<div class="aedit"><label>Data<input type="date" id="edate" value="'+esc(S.aen&&S.aen.d||m.date||'')+'"></label><label>Nome squadra 1<input id="enameA" maxlength="14" value="'+esc(S.aen&&S.aen.A||tn(m,'A'))+'"></label><label>Nome squadra 2<input id="enameB" maxlength="14" value="'+esc(S.aen&&S.aen.B||tn(m,'B'))+'"></label><div class="label">Colore squadra 1</div>'+tsw('A',S.aec,'aecol')+'<div class="label">Colore squadra 2</div>'+tsw('B',S.aec,'aecol')+'<button class="primary" data-a="aesave" data-id="'+esc(m._id)+'">Salva le modifiche</button></div>';
     else h+='<button class="ghost" data-a="aed" data-id="'+esc(m._id)+'">Modifica data e nomi squadre</button>';
     h+='<button class="ghost" data-a="adel" data-id="'+esc(m._id)+'" style="color:#d33">'+(S.adelAsk===m._id?'Tocca ancora per eliminare':'Elimina la partita')+'</button>'}
   return h+'</div>'}
@@ -1908,12 +1908,16 @@ document.addEventListener('click',function(e){
   else if(a==='intro'){if(window.showIntro)window.showIntro(true);return}
   else if(a==='share'){shareNow();var sb=$1('[data-a="share"]');if(sb)pop(sb,1.25);return}
   else if(a==='af'){S.af=v;S.openH=null;render()}
-  else if(a==='aed'){if(!ADMIN)return;S.aed=id;render()}
+  else if(a==='aed'){if(!ADMIN)return;var m9=D.history.filter(function(x){return x._id===id})[0];if(!m9)return;S.aed=id;S.aen=null;S.aec={colorA:tcol(m9,'A'),colorB:tcol(m9,'B')};render()}
+  else if(a==='aecol'){
+    if(!ADMIN||!S.aec)return;var k9=el.dataset.t,nc9=TCOLS[+v][0],ok9=k9==='A'?'B':'A';
+    if(S.aec['color'+ok9]===nc9){toast('È già il colore dell\'altra squadra');return}
+    S.aen={d:($1('#edate')||{}).value,A:($1('#enameA')||{}).value,B:($1('#enameB')||{}).value};S.aec['color'+k9]=nc9;render()}
   else if(a==='aesave'){
     if(!ADMIN)return;var dv=($1('#edate')||{}).value,na=cleanName(($1('#enameA')||{}).value||''),nb=cleanName(($1('#enameB')||{}).value||'');
     if(!dv){toast('Inserisci la data');return}
-    var o={date:dv};if(na)o.nameA=na;if(nb)o.nameB=nb;
-    upd('history/'+id,o).then(function(){S.aed=null;toast('Partita aggiornata');render()})}
+    var o={date:dv};if(na)o.nameA=na;if(nb)o.nameB=nb;if(S.aec){o.colorA=S.aec.colorA;o.colorB=S.aec.colorB}
+    upd('history/'+id,o).then(function(){S.aed=null;S.aen=null;S.aec=null;toast('Partita aggiornata');render()})}
   else if(a==='adel'){
     if(!ADMIN)return;
     if(S.adelAsk!==id){S.adelAsk=id;render();setTimeout(function(){if(S.adelAsk===id){S.adelAsk=null;render()}},4000);return}
