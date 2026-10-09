@@ -151,9 +151,10 @@ button:focus-visible{outline:3px dashed var(--ink);outline-offset:3px}
 .cd{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:12px 0 4px;padding:8px 12px;border:var(--bw) dashed var(--bc);border-radius:12px;background:var(--soft)}
 .cd .label{margin:0}.cd b{font:700 17px var(--body);font-variant-numeric:tabular-nums;white-space:nowrap}
 .cd.soon b{color:var(--pink)}.cd.over{opacity:.75}.cd.over .label{visibility:hidden}
-.votecta{margin:0 0 14px;padding:16px;border:var(--bw) solid var(--bc);border-radius:calc(var(--rk) * 18px);background:var(--yellow);color:var(--on-acc);box-shadow:var(--so) var(--so) 0 var(--shadow);animation:vcp 2s ease-in-out infinite}
-.votecta .label{color:inherit;opacity:.8;margin:0}.votecta b{display:block;font:400 24px/1.1 var(--display);text-transform:uppercase;margin:4px 0 12px}
-.votecta .vcb{display:grid;gap:8px}.votecta .primary{background:var(--surface);color:var(--ink)}
+.votecta{margin:0 0 10px;padding:10px 12px;display:flex;align-items:center;gap:10px;border:var(--bw) solid var(--bc);border-radius:calc(var(--rk) * 16px);background:var(--yellow);color:var(--on-acc);box-shadow:var(--so) var(--so) 0 var(--shadow);animation:vcp 2s ease-in-out infinite}
+.votecta .vct{flex:1;min-width:0}.votecta .label{color:inherit;opacity:.8;margin:0;font-size:10px}.votecta b{display:block;font:400 19px/1.1 var(--display);text-transform:uppercase;margin:2px 0 0;white-space:nowrap}
+.votecta .vcb{display:flex;gap:6px;flex:none}.votecta .primary{background:var(--surface);color:var(--ink);width:auto;padding:9px 12px;font-size:13px;margin:0}
+.lastm .lres{display:block;font:400 18px/1.2 var(--display);text-transform:uppercase;margin-top:2px}.lastm{padding-top:12px;padding-bottom:12px}
 @keyframes vcp{50%{box-shadow:var(--so) var(--so) 0 var(--shadow),0 0 0 6px rgba(255,225,74,.35)}}@media (prefers-reduced-motion:reduce){.votecta{animation:none}}
 select{font:inherit;font-weight:700;color:var(--ink);background:var(--surface);border:var(--bw) solid var(--bc);border-radius:10px;padding:6px 8px;max-width:48%}
 .acch{display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:0;padding:2px 0;color:var(--ink);font:inherit;cursor:pointer;text-align:left}
@@ -535,16 +536,19 @@ function endLabel(c){var t=new Date(endTs(c));return dLabel(c.date).toLowerCase(
 function vMatch(){var c=D.cur;if(c&&(c.status==='closed'||ended(c)))return c;return D.last||null}
 function lastCard(){
   var l=D.last,c=D.cur;if(!l||!c||c.status==='closed'||ended(c))return '';
-  var h='<div class="panel lastm"><div class="label">Partita appena giocata · '+esc(dShort(l.date))+'</div><div class="res" style="font:400 22px var(--display);text-transform:uppercase;margin:6px 0">'+esc(tn(l,'A'))+' '+(l.sa||0)+' – '+(l.sb||0)+' '+esc(tn(l,'B'))+'</div><div class="note" style="margin:0 0 8px">MVP: <b>'+esc(pname(l.mvp))+'</b></div><button class="ghost" data-a="img" data-id="'+esc(l.id)+'">Riepilogo da condividere</button><button class="ghost" data-a="tab" data-v="pagella">Vai alla Pagella</button></div>';
+  var op=!!(S.acc&&S.acc.last);
+  var h='<div class="panel lastm acc'+(op?' open':'')+'"><button class="acch" data-a="acc" data-v="last" aria-expanded="'+op+'"><span style="min-width:0"><span class="label" style="display:block;margin:0">Appena giocata · '+esc(dShort(l.date))+'</span><span class="lres">'+esc(tn(l,'A'))+' '+(l.sa||0)+' – '+(l.sb||0)+' '+esc(tn(l,'B'))+'</span></span><span class="chev">›</span></button>';
+  if(op)h+='<div class="note" style="margin:4px 0 8px">MVP: <b>'+esc(pname(l.mvp))+'</b></div><button class="ghost" data-a="img" data-id="'+esc(l.id)+'">Riepilogo da condividere</button><button class="ghost" data-a="tab" data-v="pagella">Vai alla Pagella</button>';
+  h+='</div>';
   return h}
 function parts(c){return c&&c.teamA?c.teamA.concat(c.teamB||[]).filter(function(id){return P(id)&&!isPh(id)}):[]}
 function closedReg(c){return !!c&&!c.official&&c.date&&Date.now()>=dlTs(c.date)}
 function voteCta(c){
   if(!c||!ended(c))return '';var pl=parts(c);if(pl.indexOf(UID)<0)return '';
   var tg=pl.filter(function(id){return id!==UID&&!isG(id)}),dn=tg.filter(function(id){return typeof (D.levels[id]||{})['r_'+UID]==='number'}).length,mv=D.mvpv[UID],mvd=mv&&mv.matchId===c.id&&mv.for;
-  var h='<div class="votecta"><div class="label">La partita è finita</div><b>Vota i tuoi compagni</b><div class="vcb">';
-  if(c.status!=='closed')h+='<button class="primary" data-a="govote" data-v="mvp">'+(mvd?'✓ MVP votato · cambia':'Vota l\'MVP')+'</button>';
-  h+='<button class="primary" data-a="govote" data-v="lvl">Dai i voti da 1 a 5 · '+dn+'/'+tg.length+'</button></div></div>';
+  var h='<div class="votecta"><div class="vct"><span class="label">La partita è finita</span><b>Vota i compagni</b></div><div class="vcb">';
+  if(c.status!=='closed')h+='<button class="primary" data-a="govote" data-v="mvp">'+(mvd?'✓ MVP':'MVP')+'</button>';
+  h+='<button class="primary" data-a="govote" data-v="lvl">Voti '+dn+'/'+tg.length+'</button></div></div>';
   return h}
 function dlTs(iso){if(!iso)return 0;var d=new Date(iso+'T20:00:00');d.setDate(d.getDate()-1);return d.getTime()}
 function cdText(ts){var ms=ts-Date.now();if(ms<=0)return null;var t=Math.floor(ms/1000),dd=Math.floor(t/86400),hh=Math.floor(t%86400/3600),mm=Math.floor(t%3600/60),ss=t%60;function z(n){return n<10?'0'+n:''+n}return (dd?dd+(dd===1?' giorno ':' giorni ')+z(hh)+'h '+z(mm)+'m':z(hh)+':'+z(mm)+':'+z(ss))}
