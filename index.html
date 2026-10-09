@@ -1348,8 +1348,14 @@ function grow(els){els.forEach(function(el,i){el.style.transformOrigin='left cen
 function enterFx(){
   if(calmFx())return;
   var sc=document.getElementById('screen');if(!sc)return;
-  var kids=Array.prototype.slice.call(sc.children).filter(function(e){return e.tagName!=='BUTTON'});
-  gsap.from(kids,{opacity:0,y:18,duration:.5,stagger:.06,ease:'power3.out',clearProps:'opacity,transform'});
+  function grp(sel,lim){return Array.prototype.slice.call(sc.querySelectorAll(sel)).slice(0,lim||24)}
+  function stg(n){return {amount:Math.min(.45,n*.04)}}
+  var kids=Array.prototype.slice.call(sc.children);
+  gsap.from(kids,{opacity:0,y:18,duration:.5,stagger:stg(kids.length),ease:'power3.out',clearProps:'opacity,transform'});
+  var rw=grp('.row,.hist,.award,.team li,.pcl,.pcf');if(rw.length)gsap.from(rw,{opacity:0,x:-12,duration:.4,stagger:stg(rw.length),delay:.2,ease:'power2.out',clearProps:'opacity,transform'});
+  var bt=grp('.panel .primary,.panel .ghost,.seg .btn,.balance');if(bt.length)gsap.from(bt,{opacity:0,y:10,duration:.4,stagger:stg(bt.length),delay:.2,ease:'power2.out',clearProps:'opacity,transform'});
+  var cp=grp('.tabs2 .chip,.chips .chip,.swatches .swatch,.stl span');if(cp.length)gsap.from(cp,{opacity:0,scale:.85,duration:.35,stagger:stg(cp.length),delay:.2,ease:'back.out(1.8)',clearProps:'opacity,transform'});
+  var fg=grp('.field,.note,.sub,.cd,.wxc,.mapc');if(fg.length)gsap.from(fg,{opacity:0,y:8,duration:.4,stagger:stg(fg.length),delay:.15,ease:'power2.out',clearProps:'opacity,transform'});
   var st=sc.querySelectorAll('.stp .sd');if(st.length)gsap.from(st,{scale:0,duration:.45,stagger:.08,delay:.15,ease:'back.out(2.2)',clearProps:'transform'});
   var sl=sc.querySelectorAll('.stp .sl.d');sl.forEach(function(e,i){gsap.from(e,{scaleX:0,transformOrigin:'left center',duration:.5,delay:.25+i*.15,ease:'power2.out',clearProps:'transform'})});
   var hb=sc.querySelectorAll('.hbar i,.bar i');if(hb.length)gsap.from(hb,{scaleX:0,transformOrigin:'left center',duration:.8,stagger:.05,delay:.2,ease:'power3.out',clearProps:'transform'});
