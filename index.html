@@ -452,6 +452,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 /* Forfait · introduzione al primo ingresso */
 (function(){
   var KEY='forfait_intro_v1';
+  function calm(){return window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches}
   function seen(){try{return localStorage.getItem(KEY)==='1'}catch(e){return false}}
   function mark(){try{localStorage.setItem(KEY,'1')}catch(e){}}
   function standalone(){return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true}
@@ -461,12 +462,14 @@ button:disabled{opacity:.45;cursor:not-allowed}
     return '<div class="itip"><b>Tienila sul telefono</b><span>'+(ios?'Tocca il tasto Condividi di Safari e scegli «Aggiungi alla schermata Home».':'Dal menu del browser scegli «Installa app» o «Aggiungi a schermata Home».')+'</span></div>';
   }
   function slides(){return [
-    {i:'👋',t:'Benvenuto in Forfait',p:'L’app del calcetto del martedì: risposte, formazione, squadre e statistiche del gruppo, tutto in un posto.'},
-    {i:'✅',t:'Rispondi alla partita',p:'Ogni settimana tocca «Ci sono», «Forse» o «Non ci sono» entro il termine indicato. Se i posti sono finiti vai in coda e entri se qualcuno si ritira.',x:'<div class="ichips"><span style="background:var(--green)">Ci sono</span><span style="background:var(--yellow)">Forse</span><span style="background:var(--pink)">Non ci sono</span></div>'},
-    {i:'📋',t:'Formazione e forfait',p:'Quando l’admin rende ufficiale la formazione, chi si ritira dopo conta come forfait. Fino ad allora puoi cambiare idea senza conseguenze.'},
+    {i:'👋',t:'Benvenuto in Forfait',p:'L’app del calcetto del martedì: risposte, formazione, squadre, archivio e statistiche del gruppo, tutto in un posto.'},
+    {i:'✅',t:'Rispondi alla partita',p:'Ogni settimana tocca «Ci sono», «Forse» o «Non ci sono». Ti puoi iscrivere fino al giorno prima. Se i posti sono finiti vai in coda e entri se qualcuno si ritira.',x:'<div class="ichips"><span style="background:var(--green)">Ci sono</span><span style="background:var(--yellow)">Forse</span><span style="background:var(--pink)">Non ci sono</span></div>'},
+    {i:'🤨',t:'Attenzione al forfait',p:'Da due giorni prima della partita, se ti ritiri conta come forfait e finisce nella tua pagella. L’app ti chiede se sei proprio sicuro: il gruppo non te la farà passare liscia.'},
     {i:'⚖️',t:'Squadre equilibrate',p:'Le squadre si sorteggiano in base ai livelli e ai ruoli, così sono pari. Dalla scheda Partita puoi indicare il livello dei compagni da 1 a 5.'},
-    {i:'🏆',t:'Risultato, MVP e Pagella',p:'Dopo la partita l’admin inserisce punteggio, gol e assist, e tutti votano l’MVP. In Pagella trovi classifiche, premi, record e trofei a livelli.'},
-    {i:'🧑',t:'Il tuo profilo',p:'Tocca il tuo avatar in alto a destra per scegliere nome, soprannome, ruoli, colore e forma. Con il tasto Condividi mandi il riepilogo al gruppo.',x:install()}
+    {i:'⭐',t:'Risultato e voti',p:'Dopo la partita l’admin inserisce punteggio, gol e assist. Tu voti l’MVP e dai i voti ai compagni: li invii e puoi correggerli fino alla partita successiva.'},
+    {i:'📊',t:'Pagella e Archivio',p:'In Pagella trovi classifiche (tocca per vederle tutte), premi, record e trofei a livelli, difficili da conquistare. L’Archivio raccoglie tutte le partite passate, con ricerca e filtri.'},
+    {i:'🧑',t:'Il tuo profilo',p:'Tocca il tuo avatar in alto a destra: metti una foto con la macchina fotografica, altrimenti resta la tua iniziale. Il colore che scegli diventa il contorno dell’avatar.'},
+    {i:'🎲',t:'La storia del giorno',p:'Al primo accesso di ogni giorno trovi una storia inventata e assurda su uno di voi. Puoi leggerne altre o spegnerla quando vuoi.',x:install()}
   ]}
   function css(){
     if(document.getElementById('introcss'))return;
@@ -474,7 +477,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
     s.textContent='#intro{position:fixed;inset:0;z-index:98;background:var(--bg,#0b0f1a);color:var(--ink,#fff);display:flex;flex-direction:column;padding:max(14px,env(safe-area-inset-top)) 20px max(18px,env(safe-area-inset-bottom))}'+
     '#intro .itop{display:flex;justify-content:flex-end;min-height:40px}'+
     '#intro .iskip{background:none;border:0;color:var(--muted,#8d9ac0);font:700 14px var(--body,sans-serif);padding:10px 4px;cursor:pointer}'+
-    '#intro .ibody{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;max-width:420px;margin:0 auto;width:100%}'+
+    '#intro .ibody{flex:1;display:flex;flex-direction:column;justify-content:flex-start;padding-top:min(13vh,110px);align-items:center;text-align:center;max-width:420px;margin:0 auto;width:100%}'+
     '#intro .iico{width:112px;height:112px;border-radius:50%;border:3px solid var(--bc,#2f3d66);background:var(--surface,#141b2d);display:grid;place-items:center;font-size:54px;line-height:1;margin-bottom:26px;box-shadow:0 0 28px rgba(61,139,255,.25);font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}'+
     '#intro h2{margin:0 0 12px;font:700 30px/1.1 var(--display,sans-serif);text-transform:uppercase}'+
     '#intro p{margin:0;font-size:17px;line-height:1.45;color:var(--ink,#fff)}'+
@@ -486,7 +489,9 @@ button:disabled{opacity:.45;cursor:not-allowed}
     '#intro .idots i{width:9px;height:9px;border-radius:50%;background:var(--soft,#222c4a)}'+
     '#intro .idots i.on{background:var(--green,#39ff88);width:26px;border-radius:5px}'+
     '#intro .inav{display:flex;gap:10px;max-width:420px;width:100%;margin:0 auto}'+
-    '#intro .inav button{flex:1}';
+    '#intro .inav button{flex:1}'+
+    '#intro .iwrap{position:relative;width:112px;height:112px;margin-bottom:26px}#intro .iwrap .iico{margin:0;position:relative;z-index:1}'+
+    '#intro .iring{position:absolute;inset:0;border-radius:50%;border:3px solid var(--blue,#3d8bff);opacity:0;z-index:0}';
     document.head.appendChild(s);
   }
   window.showIntro=function(force){
@@ -496,15 +501,30 @@ button:disabled{opacity:.45;cursor:not-allowed}
     var S=slides(),n=0,box=document.createElement('div');
     box.id='intro';box.setAttribute('role','dialog');box.setAttribute('aria-label','Introduzione a Forfait');
     document.body.appendChild(box);
-    function done(){mark();box.remove()}
+    function done(){mark();
+      if(window.gsap&&!calm()){window.gsap.killTweensOf(box.querySelectorAll('*'));window.gsap.to(box.querySelector('.ibody'),{scale:.92,opacity:0,y:-20,duration:.28,ease:'power2.in'});window.gsap.to(box,{opacity:0,duration:.3,delay:.12,onComplete:function(){box.remove()}})}
+      else box.remove()}
     function draw(dir){
       var s=S[n],last=n===S.length-1;
       box.innerHTML='<div class="itop"><button class="iskip" data-i="skip">'+(last?'':'Salta')+'</button></div>'+
-        '<div class="ibody" id="ibody"><div class="iico">'+s.i+'</div><h2>'+s.t+'</h2><p>'+s.p+'</p>'+(s.x||'')+'</div>'+
+        '<div class="ibody" id="ibody"><div class="iwrap"><span class="iring"></span><span class="iring r2"></span><div class="iico">'+s.i+'</div></div><h2>'+s.t+'</h2><p>'+s.p+'</p>'+(s.x||'')+'</div>'+
         '<div class="idots">'+S.map(function(_,k){return '<i'+(k===n?' class="on"':'')+'></i>'}).join('')+'</div>'+
         '<div class="inav">'+(n>0?'<button class="ghost" data-i="prev">Indietro</button>':'')+'<button class="primary" data-i="next">'+(last?'Inizia':'Avanti')+'</button></div>';
+      anim(dir);
+    }
+    function anim(dir){
       var b=document.getElementById('ibody');
-      if(dir&&b&&b.animate)b.animate([{opacity:0,transform:'translateX('+(dir*36)+'px)'},{opacity:1,transform:'none'}],{duration:260,easing:'ease-out'});
+      if(window.gsap&&!calm()){
+        var g=window.gsap,ico=box.querySelector('.iico'),rings=box.querySelectorAll('.iring'),kids=box.querySelectorAll('#ibody h2,#ibody p,#ibody .ichips,#ibody .itip'),chips=box.querySelectorAll('.ichips span'),on=box.querySelector('.idots i.on'),btns=box.querySelectorAll('.inav button,.iskip');
+        g.killTweensOf([ico,rings,kids,chips,on,btns]);
+        if(!dir)g.from(box,{opacity:0,duration:.35,ease:'power1.out'});
+        g.fromTo(ico,{scale:0,rotation:dir?-35*dir:-20,y:20},{scale:1,rotation:0,y:0,duration:.7,ease:'back.out(1.9)',onComplete:function(){g.to(ico,{y:-7,duration:1.4,ease:'sine.inOut',yoyo:true,repeat:-1})}});
+        g.fromTo(rings,{scale:.8,opacity:.6},{scale:1.7,opacity:0,duration:1.6,ease:'power1.out',stagger:.5,repeat:-1,delay:.3});
+        g.from(kids,{opacity:0,x:dir?36*dir:0,y:dir?0:18,duration:.5,stagger:.1,delay:.15,ease:'power2.out',clearProps:'opacity,transform'});
+        if(chips.length)g.from(chips,{scale:0,opacity:0,duration:.45,stagger:.1,delay:.55,ease:'back.out(2.2)',clearProps:'opacity,transform'});
+        if(on)g.fromTo(on,{width:9},{width:26,duration:.45,ease:'power2.out',clearProps:'width'});
+        g.from(btns,{opacity:0,y:12,duration:.4,stagger:.07,delay:.3,ease:'power2.out',clearProps:'opacity,transform'});
+      }else if(dir&&b&&b.animate)b.animate([{opacity:0,transform:'translateX('+(dir*36)+'px)'},{opacity:1,transform:'none'}],{duration:260,easing:'ease-out'});
     }
     box.addEventListener('click',function(e){
       var t=e.target.closest&&e.target.closest('[data-i]');if(!t)return;
