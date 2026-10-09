@@ -727,12 +727,6 @@ function mkImg(mid){
     function ft(t,s){return t.replace('{s}',s)}
     var cA=tvis(tcol(m,'A')),cB=tvis(tcol(m,'B'));
     x.fillStyle='#0b0f1a';x.fillRect(0,0,cw,ch);
-    var bg=x.createLinearGradient(0,0,cw,0);bg.addColorStop(0,cA+'77');bg.addColorStop(.38,'rgba(11,15,26,0)');bg.addColorStop(.62,'rgba(11,15,26,0)');bg.addColorStop(1,cB+'77');x.fillStyle=bg;x.fillRect(0,0,cw,ch);
-    var bg2=x.createRadialGradient(540,430,40,540,430,620);bg2.addColorStop(0,'rgba(255,225,74,.22)');bg2.addColorStop(1,'rgba(255,225,74,0)');x.fillStyle=bg2;x.fillRect(0,0,cw,ch);
-    var sd=0;String(m._id||m.date||'x').split('').forEach(function(ch2){sd=(sd*31+ch2.charCodeAt(0))%2147483647});
-    function rnd(){sd=(sd*16807)%2147483647;return sd/2147483647}
-    var cf=[cA,cB,'#ffe14a','#39ff88','#ff4d7d'];
-    for(var q=0;q<70;q++){var px=60+rnd()*(cw-120),py=60+rnd()*470,pw=10+rnd()*16,ph=18+rnd()*26;x.save();x.globalAlpha=.28;x.translate(px,py);x.rotate(rnd()*6.28);x.fillStyle=cf[Math.floor(rnd()*cf.length)];x.fillRect(-pw/2,-ph/2,pw,ph);x.restore()}
     x.strokeStyle='#2f3d66';x.lineWidth=6;x.strokeRect(30,30,cw-60,ch-60);
     var tb=x.createLinearGradient(30,0,cw-30,0);tb.addColorStop(0,cA);tb.addColorStop(.5,'#ffe14a');tb.addColorStop(1,cB);x.fillStyle=tb;x.fillRect(30,30,cw-60,14);
     x.textBaseline='alphabetic';x.textAlign='left';
@@ -743,8 +737,8 @@ function mkImg(mid){
       x.fillStyle=tcol(m,t[0]);rr(x,t[1],236,460,86,43);x.strokeStyle='#f2f5ff';x.lineWidth=4;x.beginPath();if(x.roundRect)x.roundRect(t[1],236,460,86,43);else x.rect(t[1],236,460,86);x.stroke();
       x.fillStyle=tcf(tcol(m,t[0]));x.font=ft(D1,46);x.fillText(tn(m,t[0]).toUpperCase(),t[2],298,420)});
     x.font=ft(D1,210);
-    x.shadowColor=cA;x.shadowBlur=50;x.fillStyle=cA;x.fillText(''+(m.sa||0),340,500);
-    x.shadowColor=cB;x.fillStyle=cB;x.fillText(''+(m.sb||0),740,500);x.shadowBlur=0;
+    x.fillStyle=cA;x.fillText(''+(m.sa||0),340,500);
+    x.fillStyle=cB;x.fillText(''+(m.sb||0),740,500);x.shadowBlur=0;
     x.fillStyle='#f2f5ff';x.fillText('–',540,490);
     x.strokeStyle='#2f3d66';x.lineWidth=3;x.setLineDash([14,10]);x.beginPath();x.moveTo(80,540);x.lineTo(cw-80,540);x.stroke();x.setLineDash([]);
     function col(ids,x0,clr){
@@ -757,9 +751,9 @@ function mkImg(mid){
       });
     }
     col(m.teamA||[],70,tvis(tcol(m,'A')));col(m.teamB||[],570,tvis(tcol(m,'B')));
-    x.fillStyle='#ffe14a';rr(x,80,1090,cw-160,170,36);
-    x.textAlign='center';x.fillStyle='#0b0f1a';x.font=ft(B1,36);x.fillText('★  MVP DELLA PARTITA  ★',540,1148);
-    x.font=ft(D1,80);x.fillText(pname(m.mvp),540,1232);
+    x.strokeStyle='#ffe14a';x.lineWidth=5;x.strokeRect(80,1090,cw-160,170);
+    x.textAlign='center';x.fillStyle='#ffe14a';x.font=ft(B1,36);x.fillText('MVP DELLA PARTITA',540,1148);
+    x.fillStyle='#f2f5ff';x.font=ft(D1,80);x.fillText(pname(m.mvp),540,1232);
     x.fillStyle='#8d9ac0';x.font=ft(B1,30);x.fillText('IL CALCETTO DEL MARTEDÌ',540,1306);
     S.img=c.toDataURL('image/png');S.imgName='forfait-'+(m.date||'partita')+'.png';
     render();window.scrollTo(0,0);
