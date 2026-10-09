@@ -64,6 +64,13 @@ h2{font:400 30px/1 var(--display);text-transform:uppercase;margin:0 0 6px;text-w
 .gind,.grpb.solo{align-items:center}.gind{display:flex;align-items:center;gap:8px}
 .gtxt{font-size:13px;font-weight:800;color:var(--muted)}.gch{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--soft);font-size:13px;color:var(--ink);line-height:1;transition:none}.gch.o{transform:rotate(180deg)}
 .grpw{margin:0}
+#daily{position:fixed;inset:0;z-index:98;background:rgba(5,8,15,.82);display:grid;place-items:center;padding:20px;overflow:auto}
+.dcard{position:relative;width:100%;max-width:380px;background:var(--surface);border:var(--bw) solid var(--bc);border-radius:calc(var(--rk) * 24px);padding:22px 20px 16px;text-align:center;box-shadow:var(--so) var(--so) 0 var(--shadow);background-image:radial-gradient(circle at 50% 0,rgba(255,225,74,.18),rgba(0,0,0,0) 60%)}
+.dcard .dl{margin:0 0 14px;color:var(--yellow)}.dav{position:relative;display:inline-block;margin-bottom:6px}.dav .avatar{width:96px;height:96px;font-size:40px}
+.dav .de{position:absolute;right:-18px;bottom:-6px;font-size:38px;line-height:1}
+.dt{font:400 26px/1.1 var(--display);text-transform:uppercase;margin:12px 0 8px}.db{font-size:16px;line-height:1.45;font-weight:600;margin:0 0 16px}
+.dcard .primary{width:100%}.dcard .dno{margin-top:6px;font-size:13px;padding:8px}.dn{display:block;margin-top:8px;color:var(--muted);font-size:11px;font-weight:700}
+
 .lbt{cursor:pointer}.lbm{overflow:hidden}.lbh{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 0 2px;color:var(--muted);font-size:13px;font-weight:800}
 .meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px;font-weight:700}
 .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
@@ -1358,7 +1365,7 @@ function vProfilo(onb){
   h+='<div class="grp"><span class="label">Aspetto dell\'app · solo su questo dispositivo</span><div class="chips">'+[['dark','Scuro'],['light','Chiaro']].map(function(o){var lt=document.documentElement.getAttribute('data-mode')==='light';return '<button class="chip '+((o[0]==='light')===lt?'on':'')+'" data-a="mode" data-v="'+o[0]+'">'+o[1]+'</button>'}).join('')+'</div></div>';
   h+=onb?'<button class="primary" data-a="join">Entra nel gruppo</button>':'<button class="primary" data-a="tab" data-v="partita">Torna alla partita</button>';
   if(!onb&&!ADMIN)h+='<p class="note" style="word-break:break-all;margin-top:14px">ID account: '+esc(UID)+'</p>';
-  if(!onb)h+='<button class="ghost" data-a="intro" style="margin-top:10px">Rivedi l\'introduzione</button>';
+  if(!onb)h+='<button class="ghost" data-a="intro" style="margin-top:10px">Rivedi l\'introduzione</button><button class="ghost" data-a="dshow" style="margin-top:8px">La storia del giorno</button>';
   h+=helpBlock();
   return h;
 }
@@ -1377,6 +1384,63 @@ function flash(el,col){if(!el)return;var c=col.charAt(0)==='#'&&col.length===7?c
 function cascade(els,step,dy){els.forEach(function(el,i){A(el,[{opacity:0,transform:'translateY('+(dy==null?18:dy)+'px)'},{opacity:1,transform:'none'}],{duration:420,delay:i*(step||55),easing:'cubic-bezier(.2,.9,.3,1.15)',fill:'backwards'})})}
 function reveal(el){A(el,[{opacity:0,transform:'translateY(-10px) scaleY(.92)'},{opacity:1,transform:'none'}],{duration:340,easing:'cubic-bezier(.2,.9,.3,1.15)'})}
 function grow(els){els.forEach(function(el,i){el.style.transformOrigin='left center';A(el,[{transform:'scaleX(0)'},{transform:'scaleX(1)'}],{duration:700,delay:i*45,easing:'cubic-bezier(.2,.9,.2,1)',fill:'backwards'})})}
+
+/* storia del giorno: breve racconto inventato e innocuo su un giocatore */
+var STORIES=[
+ function(c){return ['⚽','Il pallone filosofo','Prima di ogni partita '+c.n+' fa tre palleggi e sussurra al pallone: «Oggi facciamo i bravi». Il pallone, per ora, non ha mai risposto. Ma sembra ascoltare.']},
+ function(c){return ['🧘','Il riscaldamento leggendario','Si narra che il riscaldamento di '+c.n+' duri più della partita: venti minuti di allungamenti, sguardo concentratissimo, e al primo contrasto si ricomincia da capo.']},
+ function(c){return ['🎒','La borsa senza fondo','Nella borsa di '+c.n+' ci sono: un paio di scarpe, due calzini spaiati, una banana e, secondo alcuni, un\'altra dimensione. Nessuno ne ha mai trovato il fondo.']},
+ function(c){return ['🔮','Il rito segreto','Prima di entrare in campo '+c.n+' compie un rituale di tre gesti. Nessuno sa quali siano, ma tutti giurano che funziona almeno una volta su due.']},
+ function(c){return ['🚀','Il gol dei 40 metri','Secondo la leggenda, '+c.n+' segnò una volta da 40 metri. Le testimonianze sono discordanti, i video inesistenti, ma la sicurezza con cui lo racconta vale una moviola.']},
+ function(c){return ['🕵️','Il caso della pettorina','Ogni volta che sparisce una pettorina, '+c.n+' indaga con lo sguardo da detective. Finora ha risolto zero casi, ma l\'impegno è da premio Nobel.']},
+ function(c){return ['🌧️','Le ginocchia meteorologiche','Dicono che '+c.n+' senta la pioggia nelle ginocchia due giorni prima. Le previsioni ufficiali non sono d\'accordo, ma sul campo il verdetto è sempre quello del cielo.']},
+ function(c){return ['🍕','Il fiuto del terzo tempo','Si dice che '+c.n+' sappia sempre dove si va a mangiare dopo la partita, prima ancora che qualcuno lo proponga. È un dono. O un ottimo fiuto per la pizza.']},
+ function(c){return ['📋','L\'allenatore immaginario','Dalla panchina, mentre aspetta il turno, '+c.n+' detta tattiche a bassa voce che nessuno ascolta. Le sue formazioni sono perfette. Sulla carta.']},
+ function(c){return ['✨','Lo stop impossibile','L\'altra sera '+c.n+' ha controllato un pallone con petto, ginocchio e piede in un solo movimento. O almeno così racconta. Il pallone, per fortuna, non ha smentito.']},
+ function(c){return ['⏰','Le scuse d\'autore','Le scuse di '+c.n+' per arrivare in ritardo sono opere d\'arte: il treno dei dinosauri, il semaforo innamorato, la scarpa che voleva restare a casa. Si accettano con un applauso.']},
+ function(c){return ['🥪','La dieta del martedì','Il martedì '+c.n+' mangia solo cose leggere: un panino, un secondo panino e poi una cosa leggerissima, il dolce.']},
+ function(c){return ['👏','L\'applauso fantasma','Quando '+c.n+' segna, dagli spalti vuoti arriva sempre un applauso. Gli studiosi parlano di eco, i bene informati dicono che sia il pallone che si congratula.']},
+ function(c){return ['🎯','Il passaggio col civico','Dicono che '+c.n+' passi la palla con una precisione tale che il pallone arriva già con indirizzo e numero civico.']},
+ function(c){return ['👟','L\'allacciata tattica','Ogni tanto '+c.n+' si ferma ad allacciarsi le scarpe nel momento più decisivo. Tecnica raffinata: l\'avversario si distrae, e sorride.']},
+ function(c){return ['🎙️','La telecronaca in garage','Nel garage di '+c.n+' c\'è un microfono finto con cui racconta le partite del martedì. «E il pallone... va in curva!» Il vicino applaude, sempre.']},
+ function(c){return ['🗑️','Il duello con il bidone','Narra la leggenda che '+c.n+' e un bidone dell\'immondizia si siano sfidati a calcio, una sera. Il bidone ha pareggiato e non ha voluto rivincita.']},
+ function(c){return ['🧤','Il ruolo dei sogni','Ufficialmente '+c.n+' gioca da '+c.r+'. Ma si dice che nei sogni giochi in tutti i ruoli: anche arbitro, anche allenatore, anche pallone.']},
+ function(c){return c.num?['👕','La maglia numero '+c.num,'Si racconta che la maglia numero '+c.num+' di '+c.n+' sia lavata solo con amore e ammorbidente alla lavanda. Per questo profuma di vittoria. Anche quando non vince.']:['👕','La maglia fortunata','Si racconta che la maglia di '+c.n+' sia lavata solo con amore e ammorbidente alla lavanda. Per questo profuma di vittoria. Anche quando non vince.']},
+ function(c){return c.aka?['🏷️','Il soprannome «'+c.aka+'»',c.n+', detto «'+c.aka+'», ha ricevuto il soprannome in una notte che nessuno ricorda e tutti raccontano in modo diverso.']:null},
+ function(c){return c.g>0?['📒','Il taccuino dei gol','Nel taccuino ufficiale '+c.n+' ha '+c.g+(c.g===1?' gol':' gol')+'. Nella sua testa almeno il triplo, tutti bellissimi, tutti da 30 metri.']:null},
+ function(c){return c.pl>1?['🗿','La statua in giardino',c.n+' ha giocato '+c.pl+' partite con questo gruppo: abbastanza per meritare una statua in giardino, a grandezza naturale e in gesso.']:null},
+ function(c){return c.mvp>0?['👑','Il re dell\'MVP',c.n+' ha vinto '+c.mvp+(c.mvp===1?' premio':' premi')+' MVP. Si dice che conservi ogni applauso in una scatola di latta, con un nastrino azzurro.']:null}
+];
+function hashStr(t){var h=2166136261;for(var i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function dailyStory(){
+  var ids=Object.keys(D.players).sort().filter(function(id){return !isPh(id)&&!isG(id)});if(!ids.length)return null;
+  var day=isoOf(new Date()),h=hashStr(day),id=ids[h%ids.length],p=P(id)||{},L=playerLog()[id]||{g:0,pl:0,mvp:0};
+  var c={n:pname(id),aka:p.aka||'',num:(p.num!==''&&p.num!=null)?p.num:'',r:String(roles(id)[0]||'Laterale').toLowerCase(),g:L.g,pl:L.pl,mvp:L.mvp},ok=[];
+  STORIES.forEach(function(f){var r=f(c);if(r)ok.push(r)});
+  var st=ok[(h>>>8)%ok.length];return {id:id,e:st[0],t:st[1],b:st[2],day:day}}
+function showDaily(force){
+  var st=dailyStory();if(!st||document.getElementById('daily'))return;
+  var o=document.createElement('div');o.id='daily';o.setAttribute('role','dialog');o.setAttribute('aria-label','La storia del giorno');
+  o.innerHTML='<div class="dcard"><div class="label dl">La storia del giorno</div><div class="dav">'+avHtml(st.id,P(st.id),1).replace(/ data-pid="[^"]*"/,'')+'<span class="de">'+st.e+'</span></div><h3 class="dt">'+esc(st.t)+'</h3><p class="db">'+esc(st.b)+'</p><button class="primary" data-a="dclose">Che storia!</button><button class="ghost dno" data-a="doff">Non mostrarla più</button><small class="dn">Storia inventata, giusto per sorridere.</small></div>';
+  document.body.appendChild(o);
+  if(!calmFx()){
+    gsap.from(o,{opacity:0,duration:.3});
+    gsap.from(o.querySelector('.dcard'),{scale:.7,y:40,opacity:0,duration:.6,ease:'back.out(1.6)'});
+    gsap.from(o.querySelector('.dav'),{scale:0,rotation:-20,duration:.6,delay:.2,ease:'back.out(2.2)'});
+    gsap.fromTo(o.querySelector('.de'),{scale:0},{scale:1,duration:.5,delay:.5,ease:'elastic.out(1,.5)'});
+    gsap.from(o.querySelectorAll('.dl,.dt,.db'),{opacity:0,y:14,duration:.45,stagger:.12,delay:.3,ease:'power2.out'});
+    gsap.from(o.querySelectorAll('.primary,.dno,.dn'),{opacity:0,y:10,duration:.4,stagger:.08,delay:.8,ease:'power2.out'});
+  }
+  try{if(!force)localStorage.setItem('fdaily',st.day)}catch(e){}
+}
+function closeDaily(){
+  var o=document.getElementById('daily');if(!o)return;
+  if(!calmFx()){gsap.to(o.querySelector('.dcard'),{scale:.85,y:30,opacity:0,duration:.25,ease:'power2.in'});gsap.to(o,{opacity:0,duration:.3,delay:.1,onComplete:function(){o.remove()}})}
+  else o.remove()}
+function maybeDaily(){
+  try{if(localStorage.getItem('fdailyoff')==='1'||localStorage.getItem('fdaily')===isoOf(new Date()))return}catch(e){}
+  if(document.getElementById('intro')){setTimeout(maybeDaily,1500);return}
+  if(!me())return;showDaily()}
 function enterFx(){
   if(calmFx())return;
   var sc=document.getElementById('screen');if(!sc)return;
@@ -1425,6 +1489,7 @@ function render(){
   var f=onb?function(){return vProfilo(true)}:{partita:vPartita,squadre:vSquadre,risultato:vRisultato,pagella:vPagella,profilo:function(){return vProfilo(false)}}[S.tab];
   document.getElementById('screen').innerHTML=S.ready?(S.img?imgPanel():'')+f():'<div class="panel empty">Carico i dati del gruppo…</div>';
   fxRun();
+  if(S.ready&&!S.dailyChk&&me()&&Object.keys(D.players).length){S.dailyChk=true;setTimeout(maybeDaily,900)}
   if(S.ready){var ek=S.tab+(onb?'o':'');if(S.ek!==ek){S.ek=ek;enterFx()}if(S.ringPending){if(document.querySelector('#screen .ring'))ringFx();else if(S.tab!=='partita')S.ringPending=false}}
 }
 function changed(){S.ready=true;var a=document.activeElement;if(a&&a.tagName==='INPUT'&&document.getElementById('screen').contains(a)){S.dirty=true}else render()}
@@ -1660,6 +1725,9 @@ document.addEventListener('click',function(e){
       var n=Object.assign({},m);delete n._id;n.teamA=rl(m.teamA);n.teamB=rl(m.teamB);n.goals=mg(m.goals);n.assists=mg(m.assists);if(m.og)n.og=mg(m.og);if(n.mvp===id)n.mvp=to;
       return setDoc('history/'+m._id,n)});
     Promise.all(ops).then(function(){return del('players/'+id)}).then(function(){toast(nm0+' collegato a '+nm1)})}
+  else if(a==='dclose'){closeDaily();return}
+  else if(a==='doff'){try{localStorage.setItem('fdailyoff','1')}catch(e){}closeDaily();toast('Non vedrai più le storie');return}
+  else if(a==='dshow'){showDaily(true);return}
   else if(a==='lbx'){
     var kk=S.sub||'x';S.lbx=S.lbx||{};
     var lm=document.querySelector('.lbm'),lt=el;
