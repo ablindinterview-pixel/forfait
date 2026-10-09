@@ -248,6 +248,7 @@ select{font:inherit;font-weight:700;color:var(--ink);background:var(--surface);b
 .arcbar{margin-bottom:8px}.arcf{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;align-items:center}
 .arcf select{margin-left:auto;font:inherit;font-weight:800;font-size:14px;padding:5px 10px;border:var(--bw) solid var(--bc);border-radius:99px;background:var(--surface);color:inherit}
 .arm{margin:8px 0 0;color:var(--muted)}.arc-n{font-size:12px;color:var(--muted);margin:2px 0 4px}
+.rqk{display:flex;gap:8px;margin:0 0 12px}.rqk .ghost{flex:1;margin:0;padding-left:8px;padding-right:8px}
 .hrow{display:flex;align-items:center;gap:10px;padding:5px 0;cursor:pointer}
 .hd{flex:none;width:30px;text-align:center;line-height:1}.hd b{display:block;font:700 18px var(--display)}.hd small{font:800 9px var(--body);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 .hteams{flex:0 1 auto;min-width:96px;max-width:58%;display:flex;flex-direction:column;font:700 14px/1.25 var(--body)}.hteams>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1152,7 +1153,7 @@ function vRisultato(){
   if(S.corr==='__past'&&S.past){if(S.past.stage!=='res')return h+pastForm();corr=S.past}
   else if(S.corr){corr=D.history.filter(function(x){return x._id===S.corr})[0]||null;if(!corr)S.corr=null}
   if(corr){c={id:corr._id,date:corr.date,teamA:corr.teamA||[],teamB:corr.teamB||[],nameA:corr.nameA,nameB:corr.nameB,colorA:corr.colorA,colorB:corr.colorB,format:corr.format,status:'open'};h+='<div class="banner">'+(corr._past?'Stai inserendo la partita del '+esc(dShort(corr.date))+'.':'Stai correggendo la partita del '+esc(dShort(corr.date))+'. Il risultato nuovo sostituisce quello salvato.')+'</div><button class="ghost" data-a="corrno" style="margin:0 0 12px">'+(corr._past?'Annulla':'Annulla la correzione')+'</button>'}
-  if(ADMIN&&!S.corr)h+='<button class="ghost" data-a="pastnew" style="margin:0 0 12px">Inserisci una partita passata</button>';
+  if(ADMIN&&!S.corr)h+='<div class="rqk"><button class="ghost" data-a="toarc">📚 Archivio partite</button><button class="ghost" data-a="pastnew">＋ Partita passata</button></div>';
   if(!c)return h+'<div class="panel empty">Nessuna partita da registrare.</div>';
   if(c.status==='closed')return h+'<div class="panel empty">Risultato già salvato: '+esc(tn(c,'A'))+' '+(c.sa||0)+' – '+(c.sb||0)+' '+esc(tn(c,'B'))+'. Convoca la prossima dalla scheda Partita.</div>'+(ADMIN?'<button class="ghost" data-a="editres" data-id="'+esc(c.id)+'">Correggi il risultato</button>':'');
   if(!corr&&!teamsReady())return h+'<div class="panel empty">Servono prima le squadre.'+(ADMIN?' Creale dalla scheda Squadre.':'')+'</div>';
@@ -1808,6 +1809,7 @@ document.addEventListener('click',function(e){
   var el=e.target.closest('[data-a]');if(!el)return;
   var a=el.dataset.a,v=el.dataset.v,id=el.dataset.id,d=+el.dataset.d,m=me()||S.draft;
   if(a==='tab'){S.tab=v;S.img=null;window.scrollTo(0,0)}
+  else if(a==='toarc'){if(!ADMIN)return;S.tab='pagella';S.sub='albo';S.openH=null;S.img=null;window.scrollTo(0,0)}
   else if(a==='rsvp'){rsvp(v)}
   else if(a==='regen'){
     var before=JSON.stringify((D.cur&&D.cur.teamA)||[]);
