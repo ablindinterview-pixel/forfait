@@ -247,13 +247,14 @@ select{font:inherit;font-weight:700;color:var(--ink);background:var(--surface);b
 .arcbar input,.aedit input{width:100%;box-sizing:border-box;font:inherit;padding:10px 14px;border:var(--bw) solid var(--bc);border-radius:14px;background:var(--surface);color:inherit}
 .arcbar{margin-bottom:8px}.arcf{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;align-items:center}
 .arcf select{margin-left:auto;font:inherit;font-weight:800;font-size:14px;padding:5px 10px;border:var(--bw) solid var(--bc);border-radius:99px;background:var(--surface);color:inherit}
-.arm{margin:10px 0 0;color:var(--muted)}.arc-n{font-size:12px;color:var(--muted);margin:2px 0 4px}
-.hrow{display:flex;align-items:center;gap:8px;padding:7px 0;cursor:pointer;min-height:36px}
-.hd{flex:none;width:44px;font:800 11px var(--body);letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
-.hres{flex:1;min-width:0;font:400 15px/1.1 var(--display);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}.hres b{font-weight:700;color:var(--green)}
-.hmv{flex:none;max-width:78px;font:700 11px var(--body);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hch{flex:none;color:var(--muted);font-size:20px;line-height:1;transition:transform .2s}.hist.open .hch{transform:rotate(90deg)}
-.td{display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 5px;vertical-align:middle;border:1.5px solid var(--bc)}
+.arm{margin:8px 0 0;color:var(--muted)}.arc-n{font-size:12px;color:var(--muted);margin:2px 0 4px}
+.hrow{display:flex;align-items:center;gap:10px;padding:5px 0;cursor:pointer}
+.hd{flex:none;width:30px;text-align:center;line-height:1}.hd b{display:block;font:700 18px var(--display)}.hd small{font:800 9px var(--body);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.hteams{flex:0 1 auto;min-width:96px;max-width:58%;display:flex;flex-direction:column;font:700 14px/1.25 var(--body)}.hteams>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hsc{flex:none;margin-right:auto;padding-left:6px;display:flex;flex-direction:column;align-items:flex-end;font:700 14px/1.25 var(--body);font-variant-numeric:tabular-nums;min-width:16px}
+.hteams .l,.hsc .l{color:var(--muted);font-weight:600}
+.hmv{flex:none;width:64px;text-align:right;font:800 11px var(--body);color:var(--yellow);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.td{display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 7px 0 0;vertical-align:middle;border:1.5px solid var(--bc)}
 .aedit{display:grid;gap:8px;margin:8px 0}.aedit label{display:grid;gap:3px;font-size:12px;font-weight:800;color:var(--muted)}
 .hist{padding:0;border-top:1px dashed var(--soft)}
 .hist:first-child{border-top:0}
@@ -1329,7 +1330,8 @@ function arcList(){
     var k=arcMonthKey(m);
     if(k!==cur){cur=k;var d=m.date?new Date(m.date+'T12:00:00'):null;h+='<div class="label arm">'+(d?MESI[d.getMonth()]+' '+d.getFullYear():'Senza data')+'</div>'}
     var op=S.openH===m._id,sa=m.sa||0,sb=m.sb||0;
-    h+='<div class="hist'+(op?' open':'')+'"><div class="hrow" data-a="hist" data-id="'+esc(m._id)+'" role="button" tabindex="0" aria-expanded="'+op+'"><span class="hd">'+esc(dShort(m.date))+'</span><span class="hres"><i class="td" style="background:'+tcol(m,'A')+'"></i>'+esc(tn(m,'A'))+' <b>'+sa+'–'+sb+'</b> '+esc(tn(m,'B'))+'<i class="td" style="background:'+tcol(m,'B')+'"></i></span>'+(m.mvp?'<span class="hmv">⭐ '+esc(pname(m.mvp))+'</span>':'')+'<span class="hch">›</span></div>'+(op?arcDet(m):'')+'</div>'});
+    var dd=m.date?new Date(m.date+'T12:00:00'):null,wa=sa>=sb,wb=sb>=sa;
+    h+='<div class="hist'+(op?' open':'')+'"><div class="hrow" data-a="hist" data-id="'+esc(m._id)+'" role="button" tabindex="0" aria-expanded="'+op+'"><span class="hd"><b>'+(dd?dd.getDate():'–')+'</b><small>'+(dd?dd.toLocaleDateString('it-IT',{month:'short'}).replace('.',''):'')+'</small></span><span class="hteams"><span class="'+(wa?'w':'l')+'"><i class="td" style="background:'+tcol(m,'A')+'"></i>'+esc(tn(m,'A'))+'</span><span class="'+(wb?'w':'l')+'"><i class="td" style="background:'+tcol(m,'B')+'"></i>'+esc(tn(m,'B'))+'</span></span><span class="hsc"><b class="'+(wa?'w':'l')+'">'+sa+'</b><b class="'+(wb?'w':'l')+'">'+sb+'</b></span><span class="hmv">'+(m.mvp?'⭐ '+esc(pname(m.mvp)):'')+'</span></div>'+(op?arcDet(m):'')+'</div>'});
   return h}
 function arcPanel(){
   var mons=[];D.history.forEach(function(m){var k=arcMonthKey(m);if(k&&mons.indexOf(k)<0)mons.push(k)});
