@@ -624,6 +624,8 @@ function endLabel(c){var t=new Date(endTs(c));return dLabel(c.date).toLowerCase(
 function vMatch(){var c=D.cur;if(c&&(c.status==='closed'||ended(c)))return c;return D.last||null}
 function lastCard(){
   var l=D.last,c=D.cur;if(!l||!c||c.status==='closed'||ended(c))return '';
+  var hm=D.history.filter(function(x){return x._id===l.id})[0];
+  if(hm){l=Object.assign({},l);['date','nameA','nameB','colorA','colorB','sa','sb','mvp','teamA','teamB','format'].forEach(function(k){if(hm[k]!==undefined)l[k]=hm[k]})}
   var op=!!(S.acc&&S.acc.last);
   var ca=tcol(l,'A'),cb=tcol(l,'B');
   var h='<div class="panel lastm acc'+(op?' open':'')+'" style="background-image:linear-gradient(100deg,'+ca+'55 0%,rgba(0,0,0,0) 38%,rgba(0,0,0,0) 62%,'+cb+'55 100%)"><button class="acch" data-a="acc" data-v="last" aria-expanded="'+op+'"><span style="min-width:0"><span class="label" style="display:block;margin:0;font-size:10px">🏆 '+esc(dShort(l.date))+(l.mvp?' · <span class="lmv">⭐ MVP '+esc(pname(l.mvp))+'</span>':'')+'</span><span class="lres">'+esc(tn(l,'A'))+' '+(l.sa||0)+' – '+(l.sb||0)+' '+esc(tn(l,'B'))+'</span></span><span class="chev">›</span></button>';
