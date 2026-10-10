@@ -955,7 +955,7 @@ function shareText(){
     var sub=S.sub||'premi',map={marcatori:['g','gol'],assist:['a','assist'],mvp:['mvp','MVP'],presenze:['pl','partite'],forfait:['fg','forfait']};
     L.push('📊 Pagella · '+np(D.history.length,'partita giocata','partite giocate'));
     if(map[sub]){L.push(({marcatori:'Marcatori',assist:'Assist',mvp:'MVP',presenze:'Presenze',forfait:'Forfait'})[sub]+':');topList(map[sub][0],map[sub][1]).forEach(function(x){L.push(x)})}
-    else if(sub==='media'){L.push('Media gol a partita:');ids.filter(function(id){return st[id].pl>0}).map(function(id){return [id,st[id].g/st[id].pl]}).sort(function(x,y){return y[1]-x[1]}).slice(0,5).forEach(function(x,i){L.push((i+1)+'. '+pname(x[0])+' '+x[1].toFixed(1))})}
+    else if(sub==='media'){L.push('Media gol a partita (almeno 5 presenze):');ids.filter(function(id){return st[id].pl>=5}).map(function(id){return [id,st[id].g/st[id].pl]}).sort(function(x,y){return y[1]-x[1]}).slice(0,5).forEach(function(x,i){L.push((i+1)+'. '+pname(x[0])+' '+x[1].toFixed(1))})}
     else if(sub==='premi'){awardsList().forEach(function(x){L.push(x.l+': '+x.n+' ('+x.d+')')})}
     else if(sub==='albo'){D.history.slice(0,5).forEach(function(m){L.push(dShort(m.date)+' · '+tn(m,'A')+' '+(m.sa||0)+'–'+(m.sb||0)+' '+tn(m,'B'))})}
     else{[['Capocannoniere','g','gol'],['MVP','mvp','premi'],['Più presente','pl','partite']].forEach(function(r){var b=topList(r[1],r[2])[0];if(b)L.push(r[0]+': '+b.replace(/^1\. /,''))})}
@@ -1026,7 +1026,7 @@ function awardsList(){
   if(x=best(function(id){return st[id].mvp},1))out.push({l:'MVP della stagione',n:pname(x.id),d:np(x.v,'premio','premi')});
   if(x=best(function(id){return st[id].pl},1))out.push({l:'Più presente',n:pname(x.id),d:np(x.v,'partita','partite')});
   if(x=best(function(id){return ex.wins[id]||0},1))out.push({l:'Più vittorie',n:pname(x.id),d:np(x.v,'vittoria','vittorie')});
-  if(x=best(function(id){return st[id].pl>=2?st[id].g/st[id].pl:0},0.01))out.push({l:'Miglior media gol',n:pname(x.id),d:x.v.toFixed(1)+' a partita'});
+  if(x=best(function(id){return st[id].pl>=5?st[id].g/st[id].pl:0},0.01))out.push({l:'Miglior media gol',n:pname(x.id),d:x.v.toFixed(1)+' a partita'});
   if(x=best(function(id){return ex.streak[id]},2))out.push({l:'Serie in corso',n:pname(x.id),d:x.v+' partite di fila'});
   var pr=ex.pairs.filter(function(p){return p.n>=2}).sort(function(a,b){return b.pts/b.n-a.pts/a.n||b.n-a.n})[0];
   if(pr)out.push({l:'Coppia d\'oro',n:pname(pr.a)+' + '+pname(pr.b),d:pr.w+' vittorie su '+pr.n});
@@ -1366,7 +1366,7 @@ function vPagella(){
     return lbWrap(arr.map(function(id,i){return '<div class="row"><span class="num" style="min-width:20px;text-align:left;color:var(--muted)">'+(i+1)+'</span><div class="name">'+esc(pname(id))+'</div><div class="hbar"><i style="width:'+(st[id][key]/max*100)+'%"></i></div><span class="num">'+st[id][key]+'</span></div>'}));
   }
   if(S.sub==='marcatori')h+=list('g');
-  if(S.sub==='media'){h+=listV(ids.filter(function(id){return st[id].pl>0}).map(function(id){return {n:esc(pname(id)),v:st[id].g/st[id].pl}}).sort(function(a,b){return b.v-a.v}),function(v){return v.toFixed(1)},'Ancora nessuna partita giocata.')+'<p class="note">Gol a partita giocata.</p>'}
+  if(S.sub==='media'){h+=listV(ids.filter(function(id){return st[id].pl>=5}).map(function(id){return {n:esc(pname(id)),v:st[id].g/st[id].pl}}).sort(function(a,b){return b.v-a.v}),function(v){return v.toFixed(1)},'Nessuno ha ancora 5 presenze.')+'<p class="note">Gol a partita giocata. Contano solo i giocatori con almeno 5 presenze.</p>'}
   if(S.sub==='serie'){var ex=extra();h+=listV(ids.filter(function(id){return ex.streak[id]>0}).map(function(id){return {n:esc(pname(id)),v:ex.streak[id]}}).sort(function(a,b){return b.v-a.v}),function(v){return v},'Ancora nessuna partita giocata.')+'<p class="note">Partite consecutive giocate fino all\'ultima.</p>'}
   if(S.sub==='coppie'){var ep=extra().pairs,good=ep.filter(function(p){return p.n>=2});if(!good.length)good=ep;h+=listV(good.map(function(p){return {n:esc(pname(p.a))+' + '+esc(pname(p.b)),v:p.pts/p.n,t:p.w+'/'+p.n}}).sort(function(a,b){return b.v-a.v}),function(v){return v},'Servono partite giocate nella stessa squadra.')+'<p class="note">Vittorie su partite giocate insieme nella stessa squadra. Contano le coppie con almeno 2 partite insieme, se ce ne sono.</p>'}
   if(S.sub==='premi'){var aw2=awardsList();h+=aw2.length?'<div class="awards" style="margin-bottom:6px">'+aw2.map(function(a){return '<div class="award"><div class="label">'+esc(a.l)+'</div><div class="v">'+esc(a.n)+'</div><div class="d">'+esc(a.d)+'</div></div>'}).join('')+'</div><button class="ghost" data-a="awimg" style="margin-top:6px">Crea l\'immagine dei premi</button>':'<div class="empty">I premi compaiono dopo le prime partite.</div>'}
