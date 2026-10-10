@@ -40,7 +40,14 @@ h2{font:400 30px/1 var(--display);text-transform:uppercase;margin:0 0 6px;text-w
 .sub{color:var(--ink);opacity:.8;margin:0 0 16px;font-weight:600}
 .label{font:800 11px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .panel{background:var(--surface);border:var(--bw) solid var(--bc);border-radius:calc(var(--rk) * 18px);box-shadow:var(--so) var(--so) 0 var(--shadow);padding:14px;margin-bottom:18px}
-.ticket{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:end}
+.panel.tk{overflow:hidden}.ticket{display:flex;gap:14px;align-items:center}.tkx{min-width:0}
+.cal{flex:none;width:68px;border:var(--bw) solid var(--bc);border-radius:calc(var(--rk) * 14px);overflow:hidden;text-align:center;background:var(--soft)}
+.cal i{display:block;font:800 11px/1 var(--body);font-style:normal;letter-spacing:.14em;background:var(--green);color:#06210f;padding:5px 0}
+.cal b{display:block;font:400 34px/1.1 var(--display);padding:3px 0 5px}
+.ticket .where{display:flex;gap:6px;flex-wrap:wrap}.tchip{display:inline-flex;align-items:center;background:var(--soft);border-radius:99px;padding:3px 10px;font-weight:700;font-size:13px;color:var(--ink)}.tk .who{margin-top:18px}
+.perf{position:relative;height:0;border-top:var(--bw) dashed var(--bc);margin:16px 6px 0}
+.perf:before,.perf:after{content:"";position:absolute;top:calc(-12px - var(--bw) / 2);width:24px;height:24px;border-radius:50%;background:var(--bg);border:var(--bw) solid var(--bc)}
+.perf:before{left:-32px}.perf:after{right:-32px}
 .ticket .when{font:400 28px/1 var(--display);text-transform:uppercase}
 .ticket .where{color:var(--muted);font-weight:600;margin-top:4px}
 .count{font:400 56px/0.9 var(--display);text-align:right;font-variant-numeric:tabular-nums}
@@ -1062,11 +1069,12 @@ function vPartita(){
   var m=allIds().filter(function(id){return rsvpOf(id)==='maybe'}),n=allIds().filter(function(id){return rsvpOf(id)==='no'});
   var shown=L.length,miss=need()-shown;
   h+=stepBar(c);
-  h+='<div class="panel"><div class="ticket"><div><div class="label">'+fmtName(c)+' · '+per()+' contro '+per()+'</div><div class="when">'+esc(dLabel(c.date))+'</div><div class="where">'+esc(c.time||'Orario da definire')+' · '+esc(c.field||'Campo da definire')+'</div></div></div>';
-  if(!off&&c.date)h+='<div class="cd" id="cd" data-ts="'+regTs(c.date)+'"><span class="label">Iscrizioni aperte ancora</span><b>'+(cdText(regTs(c.date))||'Iscrizioni chiuse')+'</b></div>';
-  h+=wxHtml(c);
+  var dd=c.date?new Date(c.date+'T12:00:00'):null,wdn=dd?cap(dd.toLocaleDateString('it-IT',{weekday:'long'})):'Data da definire';
+  h+='<div class="panel tk"><div class="ticket"><div class="cal" aria-hidden="true">'+(dd?'<i>'+esc(dd.toLocaleDateString('it-IT',{month:'short'}).replace('.','').toUpperCase())+'</i><b>'+dd.getDate()+'</b>':'<b>?</b>')+'</div><div class="tkx"><div class="label">'+fmtName(c)+' · '+per()+' contro '+per()+'</div><div class="when">'+esc(wdn)+'</div><div class="where"><span class="tchip">'+esc(c.time||'Orario da definire')+'</span><span class="tchip">'+esc(c.field||'Campo da definire')+'</span></div></div></div><div class="perf"></div>';
   var mt=miss>0?'Mancano '+miss+' per partire':miss===0?'Numero completo'+(Q.length?' · '+Q.length+' in coda':''):(shown-need())+' in più: si gira a rotazione',fe=m.length+' forse · '+n.length+' no';
   h+=whoCard(c,L,shown,miss,mt,fe);
+  if(!off&&c.date)h+='<div class="cd" id="cd" data-ts="'+regTs(c.date)+'"><span class="label">Iscrizioni aperte ancora</span><b>'+(cdText(regTs(c.date))||'Iscrizioni chiuse')+'</b></div>';
+  h+=wxHtml(c);
   if(teamsReady())h+='<div class="meta"><span>'+(miss>0?'Mancano '+miss+' per il '+per()+' contro '+per():miss===0?'Numero completo: si gioca '+per()+' contro '+per()+(Q.length?' · '+Q.length+' in coda':''):(shown-need())+' in più: si gira a rotazione')+'</span><span>'+m.length+' forse · '+n.length+' no</span></div>';
   if(ADMIN&&!off)h+='<div class="seg" style="grid-template-columns:1fr 1fr;margin:12px 0 0">'+[['calcetto','Calcetto 5 contro 5'],['calciotto','Calciotto 7 contro 7']].map(function(o){return '<button class="btn '+((c.format==='calciotto')===(o[0]==='calciotto')?'on-yes':'')+'" data-a="fmt" data-v="'+o[0]+'">'+o[1]+'</button>'}).join('')+'</div>';
   h+='<div class="seg">'+[['yes','Ci sono'],['maybe','Forse'],['no','Non ci sono']].map(function(o){var lk=o[0]==='yes'&&!ADMIN&&closedReg(c)&&mine!=='yes';return '<button class="btn '+(mine===o[0]?'on-'+o[0]:'')+'" data-a="rsvp" data-v="'+o[0]+'"'+(lk?' disabled style="opacity:.4"':'')+'>'+o[1]+'</button>'}).join('')+'</div>';
