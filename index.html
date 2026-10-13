@@ -621,7 +621,7 @@ function dShort(iso){return iso?new Date(iso+'T12:00:00').toLocaleDateString('it
 function endTs(c){if(!c||!c.date)return 0;var t=/^\d\d:\d\d$/.test(c.time||'')?c.time:'21:00';return new Date(c.date+'T'+t+':00').getTime()+3600000}
 function ended(c){c=c||D.cur;return !!c&&(c.status==='closed'||(endTs(c)>0&&Date.now()>=endTs(c)))}
 function endLabel(c){var t=new Date(endTs(c));return dLabel(c.date).toLowerCase()+' alle '+('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2)}
-function vMatch(){var c=D.cur;if(c&&(c.status==='closed'||ended(c)))return c;return D.last||null}
+function vMatch(){var c=D.cur;if(c&&(c.status==='closed'||ended(c)))return c;if(c&&c.official)return null;return D.last||null}
 function lastCard(){
   var l=D.last,c=D.cur;if(!l||!c||c.status==='closed'||ended(c))return '';
   var hm=D.history.filter(function(x){return x._id===l.id})[0];
@@ -1213,6 +1213,12 @@ function vSquadre(){
     if(stale)h+='<div class="banner">Le presenze sono cambiate dopo il sorteggio. '+(ADMIN?'Rigenera le squadre per aggiornarle.':'L\'admin deve rigenerare le squadre.')+'</div>';
     var q=diff<0.15?'Molto equilibrate':diff<0.35?'Equilibrate':'Poco equilibrate';
     h+='<div class="balance"><b>'+q+'</b><span class="label">scarto di livello '+diff.toFixed(2)+'</span></div><div class="teams">'+teamHtml(A,esc(tn(c,'A')),tcol(c,'A'),tcf(tcol(c,'A')))+teamHtml(B,esc(tn(c,'B')),tcol(c,'B'),tcf(tcol(c,'B')))+'</div>';
+    if(ADMIN&&!c.official){
+      h+='<div class="panel" style="margin-top:14px"><div class="label">Formazione ufficiale</div><p class="note" style="margin:4px 0 10px">Quando le squadre ti vanno bene, rendi ufficiale la formazione. Da quel momento chi si ritira conta come forfait.</p>';
+      if(stale)h+='<p class="note">Rigenera prima le squadre: le presenze sono cambiate.</p>';
+      else if(S.confirmOff)h+='<div class="banner">Entrano in formazione: '+esc(lineup().map(pname).join(', ')||'nessuno')+'.'+(queueIds().length?' In coda restano: '+esc(queueIds().map(pname).join(', '))+'.':'')+' Poi chi lascia conta come forfait.</div><button class="primary" data-a="official">Sì, rendi ufficiale</button><button class="ghost" data-a="cancelOff">Annulla</button>';
+      else h+='<button class="primary" data-a="askOff"'+(lineup().length<2?' disabled':'')+'>Rendi ufficiale la formazione</button>';
+      h+='</div>'}
     if(ADMIN)h+='<div class="panel" style="margin-top:14px"><div class="label">Nomi e colori delle squadre</div><label class="field" for="nameA" style="margin-top:8px"><span class="label">Prima squadra</span><input id="nameA" maxlength="20" value="'+esc(tn(c,'A'))+'" autocomplete="off"></label>'+tsw('A',c)+'<label class="field" for="nameB"><span class="label">Seconda squadra</span><input id="nameB" maxlength="20" value="'+esc(tn(c,'B'))+'" autocomplete="off"></label>'+tsw('B',c)+'</div>';
     h+='<p class="note">Il sorteggio bilancia livello e ruoli, così ogni squadra ha porta, difesa, laterale e attacco quando possibile.'+(ADMIN?' Per scambiare due giocatori toccane uno di una squadra e uno dell\'altra.':'')+'</p>'+(ADMIN?'<button class="primary" style="margin-top:14px" data-a="regen">Rigenera squadre</button><button class="ghost" data-a="unteams">'+(S.undoAsk?'Sicuro? Tocca di nuovo per annullare':'Annulla squadre')+'</button>':'');
     h+='<button class="ghost" data-a="why">'+(S.why?'Nascondi la spiegazione':'Perché questa divisione?')+'</button>'+(S.why?whyHtml(A,B):'');
