@@ -292,6 +292,7 @@ nav button[aria-selected="true"]{background:var(--blue);color:#fff;transform:tra
 .note{font-size:13px;color:var(--muted);margin:10px 0 0;font-weight:600}
 .empty{padding:22px 8px;text-align:center;font-weight:700}
 .demo{font-size:12px;color:var(--ink);opacity:.7;text-align:center;margin-top:6px;font-weight:600}
+.waitp{text-align:center;padding:22px 16px}.wait-e{font-size:46px;line-height:1;display:inline-block;animation:waitp 2.4s ease-in-out infinite}.wait-t{font:400 24px/1.1 var(--display);text-transform:uppercase;margin:6px 0 10px}@keyframes waitp{0%,100%{transform:rotate(-10deg) scale(1)}50%{transform:rotate(10deg) scale(1.12)}}@media (prefers-reduced-motion:reduce){.wait-e{animation:none}}
 .closed{background:var(--green);color:var(--on-acc);border:var(--bw) solid var(--bc);border-radius:calc(var(--rk) * 18px);box-shadow:var(--so) var(--so) 0 var(--shadow);padding:16px;margin-bottom:18px;transform:rotate(calc(-1 * var(--rot)))}
 .closed .res{font:400 34px/1.05 var(--display);text-transform:uppercase;margin:4px 0}
 .closed .label{color:inherit}
@@ -1101,6 +1102,11 @@ function vPartita(){
     h+=ADMIN?'<button class="primary" data-a="newmatch">Convoca la prossima</button>':'<p class="note">La prossima partita la convoca l\'admin.</p>';
     return h;
   }
+  if(ended(c)&&!ADMIN&&!playedIn(c)){
+    var np2=(c.teamA||[]).length+(c.teamB||[]).length||lineup().length;
+    h+=stepBar(c)+'<div class="panel waitp"><div class="wait-e" aria-hidden="true">⏳</div><div class="label">Partita conclusa</div><h3 class="wait-t">Si aspetta la chiusura della partita</h3><p class="note">'+esc(fmtName(c))+' di '+esc(dLabel(c.date).toLowerCase())+' è finita'+(np2?' ('+np2+' giocatori)':'')+'. Chi ha giocato sta votando MVP e livelli, poi l\'admin inserisce il risultato.</p><p class="note">Appena l\'admin convoca la prossima partita potrai segnarti.</p></div>';
+    return h;
+  }
   var off=!!c.official,L=lineup(),y=yesIds(),Q=queueIds(),mine=rsvpOf(UID),st=stats();
   var m=allIds().filter(function(id){return rsvpOf(id)==='maybe'}),n=allIds().filter(function(id){return rsvpOf(id)==='no'});
   var shown=L.length,miss=need()-shown;
@@ -1880,7 +1886,9 @@ function closeSure(){
   var o=document.getElementById('sure');if(!o)return;
   if(typeof gsap!=='undefined'&&!calmFx()){gsap.to(o.querySelector('.dcard'),{scale:.85,y:30,opacity:0,duration:.22,ease:'power2.in'});gsap.to(o,{opacity:0,duration:.25,delay:.08,onComplete:function(){if(o.parentNode)o.parentNode.removeChild(o)}})}
   else if(o.parentNode)o.parentNode.removeChild(o)}
+function playedIn(c){var T=(c.teamA||[]).concat(c.teamB||[]);if(T.length)return T.indexOf(UID)>=0;return lineup().indexOf(UID)>=0}
 function rsvp(v,sure){
+  if(!ADMIN&&ended(D.cur)){toast('La partita è finita: potrai segnarti quando verrà convocata la prossima');return}
   if(!me()||v===rsvpOf(UID))return;
   if(!sure&&rsvpCosts(v)){askForfeit(v);return}
   if(!ADMIN&&v==='yes'&&closedReg(D.cur)){toast('Iscrizioni chiuse: chiedi all\'admin');return}
