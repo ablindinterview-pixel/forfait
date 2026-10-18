@@ -644,6 +644,9 @@ function closeVotesCard(m){
   if(Date.now()<closeOkAt(m))return '';
   var nv=Object.keys(D.mvpv).filter(function(u){var v=D.mvpv[u];return v&&v.sent===m.id}).length;
   return '<div class="panel"><div class="label">Voti della partita</div><p class="note" style="margin:4px 0 10px">Sono passati 3 giorni. Chiudendo i voti, chi non ha votato non potrà più farlo: contano quelli già dati ('+nv+' inviati).</p>'+(S.cvAsk?'<button class="primary" data-a="cvyes">Sì, chiudi i voti</button><button class="ghost" data-a="cvno">Annulla</button>':'<button class="ghost" data-a="cvask">Chiudi i voti</button>')+'</div>'}
+function resNotice(c){
+  if(!ADMIN||!c||c.status==='closed'||!ended(c))return '';
+  return '<div class="panel"><div class="label">Da fare</div><p class="note" style="margin:4px 0 10px"><b>Manca il risultato.</b> Finché non lo inserisci la partita non va in archivio e la prossima non viene convocata.</p><button class="primary" data-a="tab" data-v="risultato">Inserisci il risultato</button></div>'}
 function voteCta(c){
   if(!c||!ended(c)||vclosed(c))return '';var pl=parts(c);if(pl.indexOf(UID)<0)return '';
   var tg=pl.filter(function(id){return id!==UID&&!isG(id)}),dn=tg.filter(function(id){return typeof (D.levels[id]||{})['r_'+UID]==='number'}).length,mv=D.mvpv[UID],mvd=mv&&mv.matchId===c.id&&mv.for;
@@ -1103,7 +1106,7 @@ function vPartita(){
     h+='<div class="panel empty">'+(ADMIN?'Crea la partita: poi imposti data, ora e campo.<br><br><button class="primary" data-a="mkmatch">Crea la partita di martedì</button>':'Quando l\'admin la crea, qui compaiono data, campo e presenze.')+'</div>';
     return h;
   }
-  h+=voteCta(vMatch())+closeVotesCard(vMatch())+lastCard();
+  h+=voteCta(vMatch())+closeVotesCard(vMatch())+resNotice(c)+lastCard();
   if(c.status==='closed'){
     h+='<div class="closed"><div class="label">Partita chiusa</div><div class="res">'+esc(tn(c,'A'))+' '+(c.sa||0)+' – '+(c.sb||0)+' '+esc(tn(c,'B'))+'</div><div>MVP: <b>'+esc(pname(c.mvp))+'</b></div></div>';
     h+='<button class="ghost" data-a="img" data-id="'+esc(c.id)+'">Crea il riepilogo da condividere</button>';
