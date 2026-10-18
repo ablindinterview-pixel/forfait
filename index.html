@@ -636,8 +636,16 @@ function lastCard(){
 function parts(c){return c&&c.teamA?c.teamA.concat(c.teamB||[]).filter(function(id){return P(id)&&!isPh(id)}):[]}
 function closedReg(c){return !!c&&!c.official&&c.date&&Date.now()>=regTs(c.date)}
 function votesSent(c){var mv=D.mvpv[UID];return !!(c&&mv&&mv.sent===c.id)}
+function vclosed(c){return !!(c&&c.votesClosed)}
+function closeOkAt(c){return endTs(c)+3*86400000}
+function closeVotesCard(m){
+  if(!ADMIN||!m||!ended(m))return '';
+  if(m.votesClosed)return '<div class="panel"><div class="label">Voti chiusi</div><p class="note" style="margin:4px 0 10px">I voti di questa partita sono chiusi: contano quelli già dati.</p><button class="ghost" data-a="cvopen">Riapri i voti</button></div>';
+  if(Date.now()<closeOkAt(m))return '';
+  var nv=Object.keys(D.mvpv).filter(function(u){var v=D.mvpv[u];return v&&v.sent===m.id}).length;
+  return '<div class="panel"><div class="label">Voti della partita</div><p class="note" style="margin:4px 0 10px">Sono passati 3 giorni. Chiudendo i voti, chi non ha votato non potrà più farlo: contano quelli già dati ('+nv+' inviati).</p>'+(S.cvAsk?'<button class="primary" data-a="cvyes">Sì, chiudi i voti</button><button class="ghost" data-a="cvno">Annulla</button>':'<button class="ghost" data-a="cvask">Chiudi i voti</button>')+'</div>'}
 function voteCta(c){
-  if(!c||!ended(c))return '';var pl=parts(c);if(pl.indexOf(UID)<0)return '';
+  if(!c||!ended(c)||vclosed(c))return '';var pl=parts(c);if(pl.indexOf(UID)<0)return '';
   var tg=pl.filter(function(id){return id!==UID&&!isG(id)}),dn=tg.filter(function(id){return typeof (D.levels[id]||{})['r_'+UID]==='number'}).length,mv=D.mvpv[UID],mvd=mv&&mv.matchId===c.id&&mv.for;
   var sent=votesSent(c),needM=c.status!=='closed'&&!mvd;
   if(sent&&!needM)return '';
@@ -1000,7 +1008,8 @@ function mvpVoteHtml(c,all){
   var played=all.indexOf(UID)>=0,mv=D.mvpv[UID],mine=mv&&mv.matchId===c.id?mv.for:null,V=mvpVotes();
   var h='<div class="panel"><div class="label">Vota l\'MVP</div>';
   if(!ended(c))return h+'<p class="note">Il voto si apre a fine partita, '+esc(endLabel(c))+'.</p></div>';
-  if(!played)h+='<p class="note">Votano i giocatori che hanno giocato.</p>';
+  if(vclosed(c))h+='<p class="note">I voti sono chiusi.</p>';
+  else if(!played)h+='<p class="note">Votano i giocatori che hanno giocato.</p>';
   else h+='<p class="note" style="margin:4px 0 10px">Scegli il migliore in campo. Non puoi votare te stesso e puoi cambiare voto finché l\'admin non salva il risultato.</p><div class="chips">'+all.filter(function(id){return id!==UID}).map(function(id){return '<button class="chip '+(mine===id?'on':'')+'" data-a="vmvp" data-id="'+esc(id)+'" aria-pressed="'+(mine===id)+'">'+esc(pname(id))+'</button>'}).join('')+'</div>';
   return h+'<p class="note">Hanno votato '+V.n+' su '+all.length+'.</p></div>';
 }
@@ -1094,7 +1103,7 @@ function vPartita(){
     h+='<div class="panel empty">'+(ADMIN?'Crea la partita: poi imposti data, ora e campo.<br><br><button class="primary" data-a="mkmatch">Crea la partita di martedì</button>':'Quando l\'admin la crea, qui compaiono data, campo e presenze.')+'</div>';
     return h;
   }
-  h+=voteCta(vMatch())+lastCard();
+  h+=voteCta(vMatch())+closeVotesCard(vMatch())+lastCard();
   if(c.status==='closed'){
     h+='<div class="closed"><div class="label">Partita chiusa</div><div class="res">'+esc(tn(c,'A'))+' '+(c.sa||0)+' – '+(c.sb||0)+' '+esc(tn(c,'B'))+'</div><div>MVP: <b>'+esc(pname(c.mvp))+'</b></div></div>';
     h+='<button class="ghost" data-a="img" data-id="'+esc(c.id)+'">Crea il riepilogo da condividere</button>';
@@ -1187,6 +1196,7 @@ function teamHtml(ids,name,col,cf){
 function ratingBlock(c){
   var h='';
   var rOpen=ended(c);
+  if(rOpen&&vclosed(c))return '<p class="note" style="margin-top:14px">I voti ai giocatori di questa partita sono chiusi.</p>';
   if(!rOpen)h+='<p class="note" style="margin-top:14px">I voti ai giocatori si aprono a fine partita, '+esc(endLabel(c))+'.</p>';
   else if(votesSent(c)&&!S.vedit)h+='<button class="ghost sentb" data-a="rating"><span class="ok">✓</span> Voti inviati · Modifica</button>';
   else h+='<button class="ghost" data-a="rating">'+(S.rating?'Chiudi i voti':'Dai i tuoi voti ai giocatori')+'</button>';
@@ -1912,6 +1922,7 @@ function rsvp(v,sure){
 }
 function vote(id,v){
   var vm0=vMatch();if(!vm0||!ended(vm0)){toast('Si vota a fine partita');return}
+  if(vclosed(vm0)){toast('I voti sono chiusi');return}
   if(id===UID){toast('Non puoi votare te stesso');return}
   var pl0=parts(vm0);if(pl0.indexOf(UID)<0||pl0.indexOf(id)<0||isG(id)){toast('Votano e si votano solo i giocatori della partita');return}
   var cur=(D.levels[id]||{})['r_'+UID],val=cur===v?null:v,key='r_'+UID,o={};o[key]=val;
@@ -1992,6 +2003,7 @@ document.addEventListener('click',function(e){
     genTeams()}
   else if(a==='vsend'){
     var vm=vMatch();if(!vm||!ended(vm)||parts(vm).indexOf(UID)<0)return;
+    if(vclosed(vm)){toast('I voti sono chiusi');return}
     var cv2=D.mvpv[UID],was=votesSent(vm);
     (cv2&&cv2.matchId===vm.id?upd('mvpvotes/'+UID,{sent:vm.id}):setDoc('mvpvotes/'+UID,{matchId:vm.id,sent:vm.id}));
     S.rating=false;S.vedit=false;toast(was?'Voti aggiornati':'Voti inviati');window.scrollTo(0,0)}
@@ -2014,6 +2026,9 @@ document.addEventListener('click',function(e){
   else if(a==='mkmatch'){mkMatch()}
   else if(a==='askOff'){S.confirmOff=true;fxOn({run:function(){reveal($1('.panel .banner'));pop($1('[data-a="official"]'),1.06)}})}
   else if(a==='cancelOff'){S.confirmOff=false}
+  else if(a==='cvask'){S.cvAsk=true}
+  else if(a==='cvno'){S.cvAsk=false}
+  else if(a==='cvyes'||a==='cvopen'){if(!ADMIN)return;var cm0=vMatch();S.cvAsk=false;if(!cm0)return;upd(D.cur&&cm0.id===D.cur.id?'matches/current':'matches/last',{votesClosed:a==='cvyes'}).then(function(){toast(a==='cvyes'?'Voti chiusi':'Voti riaperti')});return}
   else if(a==='official'){S.confirmOff=false;
     fxOn({ok:function(){return D.cur&&D.cur.official},run:function(){
       var p=qa('#screen .panel')[0];ring(p,tok('--green'));
@@ -2023,6 +2038,7 @@ document.addEventListener('click',function(e){
     upd('matches/current',{official:lineup()}).then(function(){toast('Formazione ufficiale')})}
   else if(a==='vmvp'){
     if(!ended()){toast('Si vota a fine partita');return}
+    if(vclosed(D.cur)){toast('I voti sono chiusi');return}
     var cm=D.cur,pl=cm&&cm.teamA?cm.teamA.concat(cm.teamB||[]):[];
     if(!me()||pl.indexOf(UID)<0||pl.indexOf(id)<0||id===UID||cm.status==='closed')return;
     var cv=D.mvpv[UID],cu=cv&&cv.matchId===cm.id?cv.for:null,nv=cu===id?null:id;
