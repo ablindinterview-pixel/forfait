@@ -1145,6 +1145,7 @@ function vPartita(){
   }
   h+='</div>';
   function aaddB(id){return ADMIN&&!isG(id)&&!isOff(id)&&(off||rsvpOf(id)!=='yes')?'<button class="ghost mini" data-a="aadd" data-id="'+esc(id)+'">'+(off?'Aggiungi':'Iscrivi')+'</button>':''}
+  function adropB(id){return ADMIN&&!isG(id)&&(off?isOff(id):rsvpOf(id)==='yes')?'<button class="ghost mini" data-a="adrop" data-id="'+esc(id)+'">Togli</button>':''}
   function row(id,pill,extra){
     var p=P(id)||{};
     return '<div class="row" data-id="'+esc(id)+'">'+avHtml(id,p)+'<div class="name">'+esc(pname(id))+(p.aka?' <span class="aka">“'+esc(p.aka)+'”</span>':'')+(id===UID?' (tu)':'')+'<small>'+esc(roles(id).map(function(x){return AB[x]}).join(' · '))+' · '+(isG(id)?'ospite':np(st[id].pl,'partita','partite'))+'</small>'+(p.motto?'<small class="mot">“'+esc(p.motto)+'”</small>':'')+'</div>'+(extra||'')+pill+'</div>';
@@ -1156,7 +1157,7 @@ function vPartita(){
     var gs=h.length;
     h+='<div class="panel"><div class="label" style="margin-bottom:4px">Il gruppo · '+ids.length+' giocatori</div>';
     if(!ids.length)h+='<div class="empty">Nessun giocatore ancora.</div>';
-    ids.forEach(function(id){h+=row(id,pill(id),aaddB(id))});
+    ids.forEach(function(id){h+=row(id,pill(id),aaddB(id)||adropB(id))});
     h+='</div>';
     h=h.slice(0,gs)+grpWrap(h.slice(gs));
     h+='<div class="panel"><div class="label">Formazione ufficiale</div><p class="note" style="margin:4px 0 10px">'+(ADMIN?'Quando i giocatori sono decisi, rendi ufficiale la formazione. Da quel momento chi si ritira conta come forfait.':'La formazione la rende ufficiale l\'admin. Da quel momento chi si ritira conta come forfait.')+'</p>';
@@ -1171,7 +1172,7 @@ function vPartita(){
     var gs2=h.length;
     h+='<div class="panel"><div class="label" style="margin-bottom:4px">Formazione ufficiale · '+L.length+'</div>';
     if(!L.length)h+='<div class="empty">Nessuno è rimasto in formazione.</div>';
-    L.forEach(function(id){h+=row(id,'<span class="pill yes">In formazione</span>')});
+    L.forEach(function(id){h+=row(id,'<span class="pill yes">In formazione</span>',adropB(id))});
     h+='</div>';
     var rest=allIds().filter(function(id){return !isPh(id)}).concat(guestList().map(function(g){return g.id})).filter(function(id){return L.indexOf(id)<0}).sort(function(a,b){var qa=Q.indexOf(a),qb=Q.indexOf(b);if(qa>=0||qb>=0)return (qa<0?99:qa)-(qb<0?99:qb);return order[rsvpOf(a)||'none']-order[rsvpOf(b)||'none']});
     if(rest.length){
@@ -2061,6 +2062,11 @@ document.addEventListener('click',function(e){
     setDoc('rsvps/'+id,{matchId:curId(),v:'yes',at:Date.now()});
     if(D.cur.official&&offList().indexOf(id)<0)upd('matches/current',{official:offList().concat([id])});
     toast(pname(id)+' aggiunto')}
+  else if(a==='adrop'){
+    if(!ADMIN||!D.cur||!P(id))return;
+    setDoc('rsvps/'+id,{matchId:curId(),v:'no',at:Date.now()});
+    if(D.cur.official&&offList().indexOf(id)>=0)upd('matches/current',{official:offList().filter(function(x){return x!==id})});
+    toast(pname(id)+' tolto dai partecipanti')}
   else if(a==='govote'){
     if(v==='mvp'){S.tab='risultato'}else{S.tab='squadre';S.rating=true}
     window.scrollTo(0,0)}
