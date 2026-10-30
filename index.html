@@ -567,7 +567,7 @@ var D={players:{},rsvps:{},levels:{},mvpv:{},history:[],cur:null,last:null};
 var S={gl:3,gr:'Laterale',gname:'',corr:null,tab:'partita',sub:'marcatori',rating:false,editM:false,ready:false,err:'',dirty:false,
   res:{sa:0,sb:0,goals:{},assists:{},mvp:null,forMatch:null},
   draft:{nick:'',num:10,roles:['Attacco'],foot:'Destro',color:COLORS[0]}};
-var TABS=[['partita','Partita'],['squadre','Squadre'],['risultato','Risultato'],['pagella','Pagella'],['lega','Lega']];
+var TABS=[['partita','Partita'],['squadre','Squadre'],['risultato','Risultato'],['pagella','Pagella'],['lega','Spogliatoio']];
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function me(){return UID?D.players[UID]:null}
@@ -1497,7 +1497,7 @@ function lgList(){
 function lgRefresh(){var e=$1('#lglist');if(e)e.innerHTML=lgList()}
 function vLega(){
   var n=lgItems().ids.length,k=S.ls||'nome',all=allIds().filter(function(id){return !isPh(id)}).length;
-  var h=banner()+'<h2>La lega</h2><p class="sub">'+np(all,'membro','membri')+'.</p>';
+  var h=banner()+'<h2>Lo spogliatoio</h2><p class="sub">'+np(all,'membro','membri')+'.</p>';
   h+='<div class="arcbar"><input id="lq" type="search" placeholder="Cerca un membro…" value="'+esc(S.lq||'')+'" autocomplete="off"></div>';
   h+='<div class="tabs2">'+[['nome','A–Z'],['pres','Presenze'],['gol','Gol'],['ass','Assist']].map(function(o){return '<button class="chip '+(k===o[0]?'on':'')+'" data-a="lsort" data-v="'+o[0]+'">'+o[1]+'</button>'}).join('')+'</div>';
   return h+'<div class="panel" id="lglist">'+lgList()+'</div><p class="note">Tocca un avatar per aprire la scheda del giocatore.</p>'}
