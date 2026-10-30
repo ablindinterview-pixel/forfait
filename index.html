@@ -563,7 +563,7 @@ function need(){return D.cur&&D.cur.format==='calciotto'?14:10}
 function per(){return need()/2}
 function fmtName(o){return o&&o.format==='calciotto'?'Calciotto':'Calcetto'}
 var DB=null,UID=null,MYNAME='',CANWRITE=true,ADMIN=false;
-var D={players:{},rsvps:{},levels:{},mvpv:{},duels:{},history:[],cur:null,last:null};
+var D={players:{},rsvps:{},levels:{},mvpv:{},history:[],cur:null,last:null};
 var S={gl:3,gr:'Laterale',gname:'',corr:null,tab:'partita',sub:'marcatori',rating:false,editM:false,ready:false,err:'',dirty:false,
   res:{sa:0,sb:0,goals:{},assists:{},mvp:null,forMatch:null},
   draft:{nick:'',num:10,roles:['Attacco'],foot:'Destro',color:COLORS[0]}};
@@ -631,8 +631,6 @@ function lastCard(){
   var ca=tcol(l,'A'),cb=tcol(l,'B');
   var h='<div class="panel lastm acc'+(op?' open':'')+'" style="background-image:linear-gradient(100deg,'+ca+'55 0%,rgba(0,0,0,0) 38%,rgba(0,0,0,0) 62%,'+cb+'55 100%)"><button class="acch" data-a="acc" data-v="last" aria-expanded="'+op+'"><span style="min-width:0"><span class="label" style="display:block;margin:0;font-size:10px">🏆 '+esc(dShort(l.date))+(l.mvp?' · <span class="lmv">⭐ MVP '+esc(pname(l.mvp))+'</span>':'')+'</span><span class="lres">'+esc(tn(l,'A'))+' '+(l.sa||0)+' – '+(l.sb||0)+' '+esc(tn(l,'B'))+'</span></span><span class="chev">›</span></button>';
   if(op)h+='<div class="note" style="margin:4px 0 8px">MVP: <b>'+esc(pname(l.mvp))+'</b></div><button class="ghost" data-a="img" data-id="'+esc(l.id)+'">Riepilogo da condividere</button><button class="ghost" data-a="tab" data-v="pagella">Vai alla Pagella</button>';
-  if(op&&hm&&hm.duels&&hm.duels.length){h+='<div class="label" style="margin:10px 0 4px">⚔ Sfide</div>'+hm.duels.map(function(d){var wa=d.w==='a',wb=d.w==='b';return '<div class="note" style="margin:2px 0">'+(wa?'<b>':'')+esc(pname(d.a))+' '+d.ta+(wa?'</b>':'')+' – '+(wb?'<b>':'')+d.tb+' '+esc(pname(d.b))+(wb?'</b>':'')+(d.w==='x'?' · pari':'')+'</div>'}).join('')}
-  else if(op&&hm&&!hm.duels&&duelsOf(l.id).some(function(d){return d.status==='accepted'}))h+='<div class="note" style="margin:10px 0 0">⚔ Le sfide si decidono alla chiusura dei voti.</div>';
   h+='</div>';
   return h}
 function parts(c){return c&&c.teamA?c.teamA.concat(c.teamB||[]).filter(function(id){return P(id)&&!isPh(id)}):[]}
@@ -649,52 +647,6 @@ function closeVotesCard(m){
 function resNotice(c){
   if(!ADMIN||!c||c.status==='closed'||!ended(c))return '';
   return '<div class="panel"><div class="label">Da fare</div><p class="note" style="margin:4px 0 10px"><b>Manca il risultato.</b> Finché non lo inserisci la partita non va in archivio e la prossima non viene convocata.</p><button class="primary" data-a="tab" data-v="risultato">Inserisci il risultato</button></div>'}
-/* sfide 1 contro 1 */
-function startTs(c){return endTs(c)-3600000}
-function duelsOf(mid){return Object.keys(D.duels).map(function(k){return D.duels[k]}).filter(function(d){return d&&d.matchId===mid&&d.from&&d.to})}
-function dAct(d){return d.status==='pending'||d.status==='accepted'}
-function dBusy(id,mid){return duelsOf(mid).some(function(d){return dAct(d)&&(d.from===id||d.to===id)})}
-function duelOpen(c){return !!c&&!!c.official&&c.status!=='closed'&&!ended(c)&&Date.now()<startTs(c)}
-function duelCard(c){
-  if(!c||!c.official||c.status==='closed'||ended(c))return '';
-  var L=lineup().filter(function(id){return !isG(id)&&!isPh(id)}),mid=c.id,ds=duelsOf(mid).filter(function(d){return L.indexOf(d.from)>=0&&L.indexOf(d.to)>=0});
-  var open=duelOpen(c),inL=L.indexOf(UID)>=0;
-  var acc=ds.filter(function(d){return d.status==='accepted'});
-  var mine=acc.filter(function(d){return d.from===UID||d.to===UID})[0];
-  var out=ds.filter(function(d){return d.from===UID&&d.status==='pending'})[0];
-  var inc=ds.filter(function(d){return d.to===UID&&d.status==='pending'});
-  var dec=ds.filter(function(d){return d.from===UID&&d.status==='declined'})[0];
-  var h='';
-  if(inL&&mine){var o=mine.from===UID?mine.to:mine.from;h+='<p class="note" style="margin:4px 0 8px">La tua sfida: <b>tu ⚔ '+esc(pname(o))+'</b>. Vince chi fa più punti.</p>'}
-  else if(inL&&out){h+='<p class="note" style="margin:4px 0 8px">Hai sfidato <b>'+esc(pname(out.to))+'</b>: aspetta la risposta.</p>'+(open?'<button class="ghost" data-a="dcancel">Annulla la sfida</button>':'')}
-  else if(inL&&inc.length&&open){inc.forEach(function(d){h+='<p class="note" style="margin:4px 0 8px"><b>'+esc(pname(d.from))+'</b> ti sfida: uno contro uno, si decide a fine partita.</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="primary" style="margin:0" data-a="dacc" data-id="'+esc(d.from)+'">Accetta</button><button class="ghost" style="margin:0" data-a="ddec" data-id="'+esc(d.from)+'">Rifiuta</button></div>'})}
-  else if(inL&&open){
-    if(dec)h+='<p class="note" style="margin:4px 0 8px">'+esc(pname(dec.to))+' ha rifiutato. Puoi sfidare un altro.</p>';
-    var fr=L.filter(function(id){return id!==UID&&!dBusy(id,mid)});
-    if(dBusy(UID,mid))fr=[];
-    h+=fr.length?'<p class="note" style="margin:4px 0 8px">Sfida un compagno: una sfida alla volta.</p><div class="chips">'+fr.map(function(id){return '<button class="chip" data-a="dsend" data-id="'+esc(id)+'">'+esc(pname(id))+'</button>'}).join('')+'</div>':'<p class="note" style="margin:4px 0 8px">Nessun compagno libero da sfidare.</p>';
-  }
-  var oth=acc.filter(function(d){return d!==mine});
-  if(oth.length)h+='<div class="label" style="margin:10px 0 4px">In programma</div>'+oth.map(function(d){return '<div class="row"><div class="name">'+esc(pname(d.from))+' ⚔ '+esc(pname(d.to))+'</div></div>'}).join('');
-  if(!h)return '';
-  return '<div class="panel"><div class="label">⚔ Sfida della settimana</div>'+h+'<p class="note" style="margin:10px 0 0;font-size:12px">Punti: gol e assist +1, autogol −1, vittoria +1, MVP +2, più il voto dei compagni (media − 3). L\'esito arriva quando l\'admin chiude i voti.</p></div>'}
-function duelPts(h,id,mid){
-  var g=(h.goals||{})[id]||0,a=(h.assists||{})[id]||0,og=(h.og||{})[id]||0,inA=(h.teamA||[]).indexOf(id)>=0,df=(h.sa||0)-(h.sb||0),win=inA?df>0:df<0;
-  var p=g+a-og+(win?1:0)+(h.mvp===id?2:0),T=(h.teamA||[]).concat(h.teamB||[]),s=0,n=0;
-  T.forEach(function(v){if(v===id||isG(v))return;var mv=D.mvpv[v],r=(D.levels[id]||{})['r_'+v];if(mv&&mv.sent===mid&&typeof r==='number'){s+=r;n++}});
-  var rt=n?s/n:null;
-  return {p:p,r:rt,t:Math.round((p+(n?rt-3:0))*10)/10}}
-function resolveDuels(){
-  if(!ADMIN||!DB)return;var l=D.last,ld=S.ld||{};
-  if(!l||!l.votesClosed||S.duelRes===l.id||!ld.duels||!ld.levels||!ld.mvpvotes||!ld.history)return;
-  var h=D.history.filter(function(x){return x._id===l.id})[0];if(!h||h.duels)return;
-  var T=(h.teamA||[]).concat(h.teamB||[]),out=[];
-  duelsOf(l.id).filter(function(d){return d.status==='accepted'&&T.indexOf(d.from)>=0&&T.indexOf(d.to)>=0}).forEach(function(d){
-    var x=duelPts(h,d.from,l.id),y=duelPts(h,d.to,l.id);
-    out.push({a:d.from,b:d.to,pa:x.p,pb:y.p,ra:x.r==null?null:Math.round(x.r*10)/10,rb:y.r==null?null:Math.round(y.r*10)/10,ta:x.t,tb:y.t,w:Math.abs(x.t-y.t)<0.05?'x':x.t>y.t?'a':'b'})});
-  if(!out.length)return;
-  S.duelRes=l.id;upd('history/'+l.id,{duels:out})}
-function duelStats(){var s={};D.history.forEach(function(m){(m.duels||[]).forEach(function(d){[['a','b'],['b','a']].forEach(function(p){var id=d[p[0]],o=s[id]=s[id]||{n:0,w:0,d:0,l:0,pts:0};o.n++;if(d.w==='x'){o.d++;o.pts+=1}else if(d.w===p[0]){o.w++;o.pts+=3}else o.l++})})});return s}
 function voteCta(c){
   if(!c||!ended(c)||vclosed(c))return '';var pl=parts(c);if(pl.indexOf(UID)<0)return '';
   var tg=pl.filter(function(id){return id!==UID&&!isG(id)}),dn=tg.filter(function(id){return typeof (D.levels[id]||{})['r_'+UID]==='number'}).length,mv=D.mvpv[UID],mvd=mv&&mv.matchId===c.id&&mv.for;
@@ -1091,7 +1043,6 @@ function awardsList(){
   if(x=best(function(id){return ex.streak[id]},2))out.push({l:'Serie in corso',n:pname(x.id),d:x.v+' partite di fila'});
   var pr=ex.pairs.filter(function(p){return p.n>=2}).sort(function(a,b){return b.pts/b.n-a.pts/a.n||b.n-a.n})[0];
   if(pr)out.push({l:'Coppia d\'oro',n:pname(pr.a)+' + '+pname(pr.b),d:pr.w+' vittorie su '+pr.n});
-  var sf=duelStats();if(x=best(function(id){return sf[id]&&sf[id].n>=3?sf[id].pts:0},1))out.push({l:'Re delle sfide',n:pname(x.id),d:sf[x.id].w+' vittorie su '+sf[x.id].n+' sfide'});
   if(x=best(function(id){return st[id].fg},1))out.push({l:'Re dei forfait',n:pname(x.id),d:np(x.v,'forfait','forfait')});
   return out;
 }
@@ -1193,7 +1144,6 @@ function vPartita(){
     h+='<label class="field" for="mfield" style="margin-bottom:0"><span class="label">Campo</span><input id="mfield" maxlength="60" value="'+esc(c.field||'')+'" placeholder="Nome e indirizzo del campo"></label></div>';
   }
   h+='</div>';
-  h+=duelCard(c);
   function aaddB(id){return ADMIN&&!isG(id)&&!isOff(id)&&(off||rsvpOf(id)!=='yes')?'<button class="ghost mini" data-a="aadd" data-id="'+esc(id)+'">'+(off?'Aggiungi':'Iscrivi')+'</button>':''}
   function adropB(id){return ADMIN&&!isG(id)&&(off?isOff(id):rsvpOf(id)==='yes')?'<button class="ghost mini" data-a="adrop" data-id="'+esc(id)+'">Togli</button>':''}
   function row(id,pill,extra){
@@ -1435,7 +1385,7 @@ function vPagella(){
   function top(key){var b=null;ids.forEach(function(id){if(st[id][key]>0&&(!b||st[id][key]>st[b][key]))b=id});return b}
   function aw(label,key,u1,u2){var b=top(key);return '<div class="award"><div class="label">'+label+'</div><div class="v">'+(b?esc(pname(b)):'—')+'</div><div class="d">'+(b?st[b][key]+' '+(st[b][key]===1?u1:u2):'nessun dato')+'</div></div>'}
   h+='<div class="awards">'+aw('Capocannoniere','g','gol','gol')+aw('MVP','mvp','premio','premi')+aw('Più presente','pl','partita','partite')+aw('Più forfait','fg','forfait','forfait')+'</div>';
-  h+='<div class="tabs2">'+[['premi','Premi'],['xi','Formazione tipo'],['record','Record'],['marcatori','Marcatori'],['assist','Assist'],['media','Media gol'],['mvp','MVP'],['presenze','Presenze'],['serie','Serie'],['coppie','Coppie'],['sfide','Sfide'],['forfait','Forfait'],['albo','Archivio']].map(function(x){return '<button class="chip '+(S.sub===x[0]?'on':'')+'" data-a="sub" data-v="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div><div class="panel">';
+  h+='<div class="tabs2">'+[['premi','Premi'],['xi','Formazione tipo'],['record','Record'],['marcatori','Marcatori'],['assist','Assist'],['media','Media gol'],['mvp','MVP'],['presenze','Presenze'],['serie','Serie'],['coppie','Coppie'],['forfait','Forfait'],['albo','Archivio']].map(function(x){return '<button class="chip '+(S.sub===x[0]?'on':'')+'" data-a="sub" data-v="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div><div class="panel">';
   function list(key){
     var arr=ids.slice().sort(function(a,b){return st[b][key]-st[a][key]}),max=Math.max(1,arr.length?st[arr[0]][key]:1);
     if(!arr.length)return '<div class="empty">Ancora nessun giocatore.</div>';
@@ -1445,7 +1395,6 @@ function vPagella(){
   if(S.sub==='media'){h+=listV(ids.filter(function(id){return st[id].pl>=5}).map(function(id){return {n:esc(pname(id)),v:st[id].g/st[id].pl}}).sort(function(a,b){return b.v-a.v}),function(v){return v.toFixed(1)},'Nessuno ha ancora 5 presenze.')+'<p class="note">Gol a partita giocata. Contano solo i giocatori con almeno 5 presenze.</p>'}
   if(S.sub==='serie'){var ex=extra();h+=listV(ids.filter(function(id){return ex.streak[id]>0}).map(function(id){return {n:esc(pname(id)),v:ex.streak[id]}}).sort(function(a,b){return b.v-a.v}),function(v){return v},'Ancora nessuna partita giocata.')+'<p class="note">Partite consecutive giocate fino all\'ultima.</p>'}
   if(S.sub==='coppie'){var ep=extra().pairs,good=ep.filter(function(p){return p.n>=2});if(!good.length)good=ep;h+=listV(good.map(function(p){return {n:esc(pname(p.a))+' + '+esc(pname(p.b)),v:p.n,t:p.w+'/'+p.n,pn:p.n,pw:p.w,pp:p.pts}}).sort(function(a,b){return b.pn-a.pn||b.pw-a.pw||b.pp-a.pp}),function(v){return v},'Servono partite giocate nella stessa squadra.')+'<p class="note">Vittorie su partite giocate insieme nella stessa squadra. In cima chi ha giocato più partite insieme; a parità, chi ha più vittorie. Contano le coppie con almeno 2 partite insieme, se ce ne sono.</p>'}
-  if(S.sub==='sfide'){var sf2=duelStats();h+=listV(ids.filter(function(id){return sf2[id]}).map(function(id){var o=sf2[id];return {n:esc(pname(id)),v:o.pts,t:o.w+'V '+o.d+'N '+o.l+'P',pw:o.w,pn:o.n}}).sort(function(a,b){return b.v-a.v||b.pw-a.pw||a.pn-b.pn}),function(v){return v},'Ancora nessuna sfida giocata.')+'<p class="note">Sfide uno contro uno: vittoria 3 punti, pari 1. Il premio "Re delle sfide" parte da 3 sfide giocate.</p>'}
   if(S.sub==='premi'){var aw2=awardsList();h+=aw2.length?'<div class="awards" style="margin-bottom:6px">'+aw2.map(function(a){return '<div class="award"><div class="label">'+esc(a.l)+'</div><div class="v">'+esc(a.n)+'</div><div class="d">'+esc(a.d)+'</div></div>'}).join('')+'</div><button class="ghost" data-a="awimg" style="margin-top:6px">Crea l\'immagine dei premi</button>':'<div class="empty">I premi compaiono dopo le prime partite.</div>'}
   if(S.sub==='xi')h+=xiHtml();
   if(S.sub==='record')h+=recordsHtml();
@@ -1866,7 +1815,7 @@ function render(){
   if(S.ready&&!S.dailyChk&&me()&&Object.keys(D.players).length){S.dailyChk=true;setTimeout(maybeDaily,900)}
   if(S.ready){var ek=S.tab+(onb?'o':'');if(S.ek!==ek){S.ek=ek;enterFx()}if(S.ringPending){if(document.querySelector('#screen .ring'))ringFx();else if(S.tab!=='partita')S.ringPending=false}}
 }
-function changed(){S.ready=true;try{resolveDuels()}catch(e){}var a=document.activeElement;if(a&&a.tagName==='INPUT'&&document.getElementById('screen').contains(a)){S.dirty=true}else render()}
+function changed(){S.ready=true;var a=document.activeElement;if(a&&a.tagName==='INPUT'&&document.getElementById('screen').contains(a)){S.dirty=true}else render()}
 
 /* azioni */
 function trendHtml(id){
@@ -2113,19 +2062,6 @@ document.addEventListener('click',function(e){
     setDoc('rsvps/'+id,{matchId:curId(),v:'yes',at:Date.now()});
     if(D.cur.official&&offList().indexOf(id)<0)upd('matches/current',{official:offList().concat([id])});
     toast(pname(id)+' aggiunto')}
-  else if(a==='dsend'){
-    var dc=D.cur;if(!dc||!duelOpen(dc)){toast('Le sfide sono chiuse');return}
-    var dl=lineup();if(dl.indexOf(UID)<0||dl.indexOf(id)<0||id===UID||isG(id)){toast('Puoi sfidare solo un compagno in formazione');return}
-    if(dBusy(UID,dc.id)||dBusy(id,dc.id)){toast('Una sfida alla volta');return}
-    setDoc('duels/'+dc.id+'_'+UID,{matchId:dc.id,from:UID,to:id,status:'pending',at:Date.now()});toast('Sfida inviata a '+pname(id))}
-  else if(a==='dcancel'){var dc2=D.cur;if(dc2&&duelOpen(dc2))del('duels/'+dc2.id+'_'+UID)}
-  else if(a==='dacc'){
-    var dc3=D.cur;if(!dc3||!duelOpen(dc3)){toast('Le sfide sono chiuse');return}
-    var mdl=duelsOf(dc3.id);
-    if(mdl.some(function(d){return dAct(d)&&d.status==='accepted'&&(d.from===UID||d.to===UID)})||mdl.some(function(d){return d.from===UID&&d.status==='pending'})){toast('Una sfida alla volta');return}
-    mdl.filter(function(d){return d.to===UID&&d.status==='pending'&&d.from!==id}).forEach(function(d){upd('duels/'+dc3.id+'_'+d.from,{status:'declined'})});
-    upd('duels/'+dc3.id+'_'+id,{status:'accepted'});toast('Sfida accettata')}
-  else if(a==='ddec'){var dc4=D.cur;if(dc4)upd('duels/'+dc4.id+'_'+id,{status:'declined'})}
   else if(a==='adrop'){
     if(!ADMIN||!D.cur||!P(id))return;
     setDoc('rsvps/'+id,{matchId:curId(),v:'no',at:Date.now()});
@@ -2347,7 +2283,7 @@ document.addEventListener('focusout',function(){setTimeout(function(){var a=docu
 
 /* collegamento ai dati */
 function toMap(s){var o={};s.docs.forEach(function(d){o[d.id]=d.data()});return o}
-function sub(path,fn){DB.collection(path).onSnapshot(function(s){fn(s);(S.ld=S.ld||{})[path]=1;changed()},function(e){S.err=e&&e.code||'err';changed()})}
+function sub(path,fn){DB.collection(path).onSnapshot(function(s){fn(s);changed()},function(e){S.err=e&&e.code||'err';changed()})}
 async function init(){
   render();
   var use=window.claude&&window.claude.use?function(n){return window.claude.use(n)}:function(){return Promise.resolve(null)};
@@ -2362,7 +2298,6 @@ async function init(){
   sub('rsvps',function(s){D.rsvps=toMap(s)});
   sub('levels',function(s){D.levels=toMap(s)});
   sub('mvpvotes',function(s){D.mvpv=toMap(s)});
-  sub('duels',function(s){D.duels=toMap(s)});
   sub('history',function(s){D.history=s.docs.map(function(d){var x=d.data();x._id=d.id;return x}).sort(function(a,b){return (b.date||'').localeCompare(a.date||'')})});
   DB.doc('matches/last').onSnapshot(function(s){D.last=s.exists?s.data():null;changed()},function(){});
   DB.doc('matches/current').onSnapshot(function(s){D.cur=s.exists?s.data():null;if(ADMIN&&D.cur&&D.cur.status==='closed'&&!S.autoNext){S.autoNext=1;newMatch()}changed()},function(e){S.err=e&&e.code||'err';changed()});
