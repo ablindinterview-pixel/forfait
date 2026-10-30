@@ -577,7 +577,8 @@ function gmap(){var g={};D.history.forEach(function(m){(m.guests||[]).forEach(fu
 function isPh(id){var p=D.players[id];return !!(p&&p.ph)}
 function P(id){return D.players[id]||(isG(id)?gmap()[id]:null)||null}
 function atOf(id){return isG(id)?((P(id)||{}).at||0):((D.rsvps[id]||{}).at||0)}
-function pname(id){var p=P(id);return p&&p.nick?p.nick:'Giocatore'}
+function histName(id){if(D._hs!==D.history){D._hs=D.history;D._hn={};D.history.forEach(function(m){Object.keys(m.names||{}).forEach(function(k){D._hn[k]=m.names[k]})})}return D._hn[id]||''}
+function pname(id){var p=P(id);return p&&p.nick?p.nick:(histName(id)||'Giocatore')}
 function roles(id){var p=P(id);return p&&p.roles&&p.roles.length?p.roles:['Laterale']}
 function ini(id){return pname(id).charAt(0).toUpperCase()}
 var AVI=['⚽','🧤','🦁','🐺','🦅','🐂','🔥','⚡','👑','🚀','🎯','🛡️'];
@@ -2214,7 +2215,9 @@ document.addEventListener('click',function(e){
     S.rm=null;
     if(!ADMIN)return;
     if(id===UID){toast('Non puoi rimuovere te stesso')}
-    else{var nm=pname(id);del('players/'+id);if(D.rsvps[id])del('rsvps/'+id);if(D.levels[id])del('levels/'+id);toast(nm+' rimosso dal gruppo')}
+    else{var nm=pname(id);
+      D.history.forEach(function(m){var inM=(m.teamA||[]).indexOf(id)>=0||(m.teamB||[]).indexOf(id)>=0||(m.goals||{})[id]||(m.assists||{})[id]||(m.og||{})[id]||m.mvp===id;if(inM){var nn=Object.assign({},m.names||{});nn[id]=nm;upd('history/'+m._id,{names:nn})}});
+      del('players/'+id);if(D.rsvps[id])del('rsvps/'+id);if(D.levels[id])del('levels/'+id);toast(nm+' rimosso dal gruppo')}
   }
   else if(a==='reopen'){S.confirmRe=true;fxOn({run:function(){reveal($1('.panel .banner'))}})}
   else if(a==='reopenno'){S.confirmRe=false}
